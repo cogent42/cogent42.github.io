@@ -1,0 +1,21 @@
+{
+  "name": "cogent",
+  "version": "1.0.0",
+  "description": "Telegram bot that gives you full Claude Code access to your server",
+  "type": "module",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js",
+    "setup": "node setup.js",
+    "pm2": "pm2 start ecosystem.config.cjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.92",
+    "telegraf": "^4.16.3",
+    "dotenv": "^16.4.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT"
+}
