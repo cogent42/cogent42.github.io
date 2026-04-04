@@ -45,7 +45,7 @@ for (const v of REQUIRED_VARS) {
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_USER_ID = parseInt(process.env.TELEGRAM_USER_ID, 10);
 const MAX_TURNS = parseInt(process.env.MAX_TURNS || "25", 10);
-const WORKING_DIRECTORY = process.env.WORKING_DIRECTORY || "/root";
+const WORKING_DIRECTORY = (process.env.WORKING_DIRECTORY || homedir()).replace(/^~/, homedir());
 const MEMORY_DIR = join(__dirname, "memory");
 const KNOWLEDGE_DIR = join(__dirname, "knowledge");
 const KNOWLEDGE_FILE = join(KNOWLEDGE_DIR, "knowledge.json");
