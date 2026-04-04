@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cogent - Claude Code on your server, from Telegram</title>
-  <meta name="description" content="Full Claude Code access on any server, controlled entirely from Telegram. Bash, file ops, search, persistent memory — set up in 2 minutes.">
-  <meta property="og:title" content="Cogent - Claude Code on your server, from Telegram">
-  <meta property="og:description" content="Full Claude Code access on any server, controlled entirely from Telegram.">
+  <title>cogent42 - Claude Code on your server, from Telegram</title>
+  <meta name="description" content="Full Claude Code access on any server, controlled entirely from Telegram. One file, zero complexity, two-minute setup. The anti-platform.">
+  <meta property="og:title" content="cogent42 - Claude Code on your server, from Telegram">
+  <meta property="og:description" content="Full Claude Code access on any server, controlled entirely from Telegram. The anti-platform.">
   <meta property="og:type" content="website">
   <meta name="theme-color" content="#0f0f0f">
   <link rel="icon" type="image/png" href="logo.png">
@@ -155,6 +155,71 @@
       font-size: 0.8rem;
     }
 
+    /* Philosophy */
+    .philosophy {
+      padding: 40px 0 60px;
+      border-top: 1px solid var(--border);
+    }
+    .philosophy-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 24px;
+    }
+    .philosophy-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 22px;
+    }
+    .philosophy-card h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--accent);
+    }
+    .philosophy-card p {
+      font-size: 0.825rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .philosophy-intro {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+      max-width: 600px;
+    }
+    .philosophy-intro strong { color: var(--text); }
+
+    /* Comparison */
+    .comparison {
+      padding: 40px 0 60px;
+      border-top: 1px solid var(--border);
+    }
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 20px;
+    }
+    .comparison-table th {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 2px solid var(--border);
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .comparison-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .comparison-table td:first-child { color: var(--text-muted); }
+    .comparison-table .yes { color: var(--green); }
+    .comparison-table .no { color: var(--text-muted); }
+
     /* Features */
     .features {
       padding: 40px 0 60px;
@@ -192,6 +257,19 @@
       font-size: 0.825rem;
       color: var(--text-muted);
       line-height: 1.5;
+    }
+    .feature-new {
+      display: inline-block;
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: var(--accent-dim);
+      color: var(--accent);
+      padding: 2px 6px;
+      border-radius: 3px;
+      margin-left: 6px;
+      vertical-align: middle;
     }
 
     /* How it works */
@@ -334,6 +412,7 @@
       .hero h1 { font-size: 1.75rem; }
       .hero p { font-size: 1rem; }
       .feature-grid { grid-template-columns: 1fr; }
+      .philosophy-grid { grid-template-columns: 1fr; }
       .quickstart { padding: 18px 20px; }
       .quickstart pre { font-size: 0.8rem; }
     }
@@ -345,8 +424,8 @@
   <div class="container">
     <div class="logo"><img src="logo.png" alt="cogent42" class="nav-logo">cogent42</div>
     <div class="nav-links">
-      <a href="https://github.com/cogent42/cogent42.github.io">GitHub</a>
-      <a href="https://github.com/cogent42/cogent42.github.io#license">License</a>
+      <a href="https://github.com/cogent42/cogent42">GitHub</a>
+      <a href="https://github.com/cogent42/cogent42#license">License</a>
     </div>
   </div>
 </nav>
@@ -355,12 +434,12 @@
   <div class="container">
     <img src="logo.png" alt="cogent42" class="hero-logo">
     <h1>Claude Code on your server,<br><span>from Telegram</span></h1>
-    <p>Full bash, file operations, and search on any machine you own. Runs on your existing Claude Code plan &mdash; no extra API costs. Set up in 2 minutes.</p>
+    <p>Full bash, file operations, and search on any machine you own. One file. Zero complexity. Two-minute setup. The anti-platform.</p>
 
     <div class="quickstart">
       <div class="quickstart-label">Quick Start</div>
       <button class="copy-btn" onclick="copySetup()">Copy</button>
-      <pre><span class="cmd">git clone</span> https://github.com/cogent42/cogent42.github.io.git
+      <pre><span class="cmd">git clone</span> https://github.com/cogent42/cogent42.git
 <span class="cmd">cd</span> cogent42
 <span class="cmd">node</span> setup.js  <span class="comment"># interactive — walks you through everything</span></pre>
     </div>
@@ -368,6 +447,103 @@
     <p class="prereqs">
       Requires Node.js 18+, a <a href="https://t.me/BotFather">Telegram bot token</a>, and a <a href="https://claude.ai/claude-code">Claude Code</a> subscription
     </p>
+  </div>
+</section>
+
+<section class="philosophy">
+  <div class="container">
+    <div class="section-title">Why cogent42</div>
+    <p class="philosophy-intro">
+      Tools like <strong>OpenClaw</strong> are impressive &mdash; multi-channel, multi-model, skills marketplace, browser control, 247k GitHub stars. But they're also <strong>platforms</strong>. Dozens of config files, plugin systems, channel adapters, a web UI.
+      <br><br>
+      cogent42 is the opposite. <strong>One file. One user. One server. One chat.</strong> It does one thing &mdash; gives you Claude Code from Telegram &mdash; and does it well.
+    </p>
+    <div class="philosophy-grid">
+      <div class="philosophy-card">
+        <h3>Single file, not a framework</h3>
+        <p>The entire bot is one file (bot.js). No plugin system, no adapters, no abstractions. Read it in 10 minutes, modify it in 5.</p>
+      </div>
+      <div class="philosophy-card">
+        <h3>Zero extra dependencies</h3>
+        <p>Three npm packages: telegraf, claude-agent-sdk, dotenv. No database, no Redis, no Docker required. npm install and go.</p>
+      </div>
+      <div class="philosophy-card">
+        <h3>Your server, not a service</h3>
+        <p>Runs on your machine. Uses your Claude Code subscription. No middleman, no API keys to manage, no per-token billing.</p>
+      </div>
+      <div class="philosophy-card">
+        <h3>Smart, not complex</h3>
+        <p>Auto-escalation, knowledge extraction, scheduled tasks, progress streaming &mdash; powerful features that stay simple under the hood.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="comparison">
+  <div class="container">
+    <div class="section-title">cogent42 vs OpenClaw</div>
+    <table class="comparison-table">
+      <tr>
+        <th>Feature</th>
+        <th>cogent42</th>
+        <th>OpenClaw</th>
+      </tr>
+      <tr>
+        <td>Setup time</td>
+        <td class="yes">2 minutes</td>
+        <td>15-30 minutes</td>
+      </tr>
+      <tr>
+        <td>Codebase</td>
+        <td class="yes">1 file (~1000 lines)</td>
+        <td>Large monorepo</td>
+      </tr>
+      <tr>
+        <td>Dependencies</td>
+        <td class="yes">3 npm packages</td>
+        <td>Dozens</td>
+      </tr>
+      <tr>
+        <td>Full Claude Code access</td>
+        <td class="yes">Yes</td>
+        <td class="yes">Yes</td>
+      </tr>
+      <tr>
+        <td>Persistent memory</td>
+        <td class="yes">Yes</td>
+        <td class="yes">Yes</td>
+      </tr>
+      <tr>
+        <td>Scheduled tasks</td>
+        <td class="yes">Yes (plain English)</td>
+        <td class="yes">Yes (cron syntax)</td>
+      </tr>
+      <tr>
+        <td>Live progress</td>
+        <td class="yes">Yes</td>
+        <td class="yes">Yes</td>
+      </tr>
+      <tr>
+        <td>Multi-channel</td>
+        <td class="no">Telegram only</td>
+        <td class="yes">20+ channels</td>
+      </tr>
+      <tr>
+        <td>Multi-model</td>
+        <td class="no">Claude only</td>
+        <td class="yes">Any LLM</td>
+      </tr>
+      <tr>
+        <td>Plugin system</td>
+        <td class="no">No (by design)</td>
+        <td class="yes">Yes</td>
+      </tr>
+      <tr>
+        <td>Config complexity</td>
+        <td class="yes">5 env vars</td>
+        <td>YAML + JSON configs</td>
+      </tr>
+    </table>
   </div>
 </section>
 
@@ -386,9 +562,19 @@
         <p>Sessions survive restarts. Facts and decisions are extracted into a knowledge base that carries across conversations.</p>
       </div>
       <div class="feature">
+        <div class="feature-icon">&#x23f0;</div>
+        <h3>Scheduled tasks <span class="feature-new">new</span></h3>
+        <p>Schedule recurring tasks in plain English. "Check disk space every morning at 9am." No cron syntax needed.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">&#x1f4e1;</div>
+        <h3>Live progress <span class="feature-new">new</span></h3>
+        <p>See what Claude is doing in real-time. Tool calls, file reads, and status updates appear as the query runs.</p>
+      </div>
+      <div class="feature">
         <div class="feature-icon">&#x1f4b3;</div>
         <h3>Uses your existing plan</h3>
-        <p>Runs on your Claude Code subscription. No separate API key or pay-per-token billing. Just authenticate <code>claude</code> on your server and go.</p>
+        <p>Runs on your Claude Code subscription. No separate API key or pay-per-token billing. Authenticate and go.</p>
       </div>
       <div class="feature">
         <div class="feature-icon">&#x1f512;</div>
@@ -398,12 +584,12 @@
       <div class="feature">
         <div class="feature-icon">&#x1f4ce;</div>
         <h3>Photos &amp; documents</h3>
-        <p>Send images and files via Telegram. Claude processes them on your server — screenshot debugging, document analysis, anything.</p>
+        <p>Send images and files via Telegram. Claude processes them on your server &mdash; screenshot debugging, document analysis, anything.</p>
       </div>
       <div class="feature">
         <div class="feature-icon">&#x21c5;</div>
         <h3>Smart model routing</h3>
-        <p>Defaults to Sonnet 4.6 for speed. Auto-escalates to Opus 4.6 when a query needs more. Switch manually with <code>/opus</code> and <code>/sonnet</code>.</p>
+        <p>Defaults to Sonnet 4.6 for speed. Auto-escalates to Opus 4.6 when needed. Auto-reverts after success to save costs.</p>
       </div>
     </div>
   </div>
@@ -431,7 +617,7 @@
         <div class="step-num">3</div>
         <div class="step-content">
           <h3>Message your bot</h3>
-          <p>Open Telegram, send a message. Claude Code executes on your server and replies with the result.</p>
+          <p>Open Telegram, send a message. Claude Code executes on your server and replies with the result. You'll see live progress as it works.</p>
         </div>
       </div>
     </div>
@@ -445,7 +631,10 @@
       <tr><td>/start</td><td>Welcome message and command reference</td></tr>
       <tr><td>/reset</td><td>Extract knowledge, archive session, start fresh</td></tr>
       <tr><td>/cancel</td><td>Abort the current in-flight query</td></tr>
-      <tr><td>/status</td><td>Uptime, disk, memory, model, and session info</td></tr>
+      <tr><td>/schedule</td><td>Schedule a recurring task in plain English</td></tr>
+      <tr><td>/schedules</td><td>View and manage scheduled tasks</td></tr>
+      <tr><td>/unschedule</td><td>Remove a scheduled task by ID</td></tr>
+      <tr><td>/status</td><td>Version, uptime, disk, memory, model, schedules</td></tr>
       <tr><td>/history</td><td>Session statistics</td></tr>
       <tr><td>/opus</td><td>Switch to Claude Opus 4.6</td></tr>
       <tr><td>/sonnet</td><td>Switch to Claude Sonnet 4.6</td></tr>
@@ -504,7 +693,7 @@
 
     <div class="warning">
       <div class="warning-title">Security note</div>
-      <p>Cogent runs with <code>bypassPermissions</code> mode, giving Claude unrestricted access to your server &mdash; bash, filesystem, everything. Only run this on machines you're comfortable giving full access to. The bot is locked to a single Telegram user ID; unauthorized users are silently rejected.</p>
+      <p>cogent42 runs with <code>bypassPermissions</code> mode, giving Claude unrestricted access to your server &mdash; bash, filesystem, everything. Only run this on machines you're comfortable giving full access to. The bot is locked to a single Telegram user ID; unauthorized users are silently rejected.</p>
     </div>
   </div>
 </section>
@@ -517,7 +706,7 @@
 
 <script>
 function copySetup() {
-  const text = 'git clone https://github.com/cogent42/cogent42.github.io.git\ncd cogent42\nnode setup.js';
+  const text = 'git clone https://github.com/cogent42/cogent42.git\ncd cogent42\nnode setup.js';
   navigator.clipboard.writeText(text).then(() => {
     const btn = document.querySelector('.copy-btn');
     btn.textContent = 'Copied!';

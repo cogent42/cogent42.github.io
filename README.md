@@ -12,6 +12,10 @@ cogent42 is a single-user Telegram bot that gives you complete Claude Code capab
 
 - **Full Claude Code access** -- bash, file read/write/edit, and search via Telegram
 - **Photo & document support** -- send images and files, Claude processes them on your server
+- **Live progress updates** -- see what Claude is doing in real-time (tool use, file reads) via editable messages
+- **Acknowledgment reactions** -- instant visual feedback (eyes on receive, checkmark on success, X on error)
+- **Scheduled tasks** -- schedule recurring tasks in plain English (e.g. "check disk space every morning at 9am")
+- **Interactive confirmations** -- inline keyboard buttons for destructive actions like /reset and /opus
 - **Persistent memory** -- conversations survive restarts through session resume
 - **Automatic knowledge extraction** -- facts, decisions, and server config are pulled from conversations into a knowledge base (capped at 100 entries, auto-pruned)
 - **Cross-session context** -- knowledge is injected into new sessions so Claude remembers what matters
@@ -19,7 +23,7 @@ cogent42 is a single-user Telegram bot that gives you complete Claude Code capab
 - **Manual model switching** -- `/opus` and `/sonnet` commands
 - **Cancel in-flight queries** -- `/cancel` aborts the current query
 - **Bot personality** -- optional personality config that also evolves through knowledge extraction
-- **Graceful shutdown** -- in-flight queries are cleanly aborted on SIGINT/SIGTERM
+- **Graceful shutdown** -- in-flight queries and scheduled jobs are cleanly aborted on SIGINT/SIGTERM
 - **Session resume fallback** -- automatically starts a fresh session if resume fails
 
 ## Prerequisites
@@ -33,7 +37,7 @@ cogent42 is a single-user Telegram bot that gives you complete Claude Code capab
 **Automated setup (recommended):**
 
 ```bash
-git clone https://github.com/cogent42/cogent42.github.io.git
+git clone https://github.com/cogent42/cogent42.git
 cd cogent42
 node setup.js
 ```
@@ -43,7 +47,7 @@ The interactive setup walks you through everything.
 **Manual setup:**
 
 ```bash
-git clone https://github.com/cogent42/cogent42.github.io.git
+git clone https://github.com/cogent42/cogent42.git
 cd cogent42
 cp .env.example .env
 # Edit .env with your tokens
@@ -69,11 +73,27 @@ node bot.js
 | `/start` | Welcome message |
 | `/reset` | Clear conversation, extract knowledge, start fresh |
 | `/cancel` | Cancel the current in-flight query |
-| `/status` | System info (version, uptime, disk, memory, model, session) |
+| `/schedule` | Schedule a recurring task in plain English |
+| `/schedules` | View and manage scheduled tasks |
+| `/unschedule` | Remove a scheduled task by ID |
+| `/status` | System info (version, uptime, disk, memory, model, session, schedules) |
 | `/history` | Session stats |
 | `/opus` | Switch to Opus 4.6 |
 | `/sonnet` | Switch to Sonnet 4.6 |
 | `/knowledge` | View stored knowledge entries |
+
+## Scheduling
+
+Schedule recurring tasks in plain English -- no cron syntax needed:
+
+```
+/schedule check disk space every morning at 9am
+/schedule remind me about deploy every friday at 5pm
+/schedule run backup every sunday at 2am
+/schedule check server health every 30 minutes
+```
+
+Claude parses your intent into a schedule. Tasks persist across restarts. Manage them with `/schedules` (interactive buttons) or `/unschedule <id>`.
 
 ## How Knowledge Works
 
@@ -93,7 +113,7 @@ cogent42/
   ecosystem.config.cjs    # PM2 config (.cjs because project is ESM)
   setup.js                # Interactive setup script
   memory/                 # Session files + current.txt for persistence
-  knowledge/              # knowledge.json with extracted facts
+  knowledge/              # knowledge.json, schedules.json
 ```
 
 ## Running with PM2
