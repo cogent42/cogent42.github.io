@@ -298,6 +298,10 @@ async function runQuery(prompt, model) {
     maxTurns: MAX_TURNS,
     abortController: new AbortController(),
     stderr: (data) => console.error("[claude stderr]", data),
+    env: {
+      ...process.env,
+      ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+    },
   };
 
   // Resume existing session or start new with knowledge
