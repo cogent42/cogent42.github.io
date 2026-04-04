@@ -855,7 +855,9 @@ async function askClaude(prompt, ctx) {
 
 // --- Bot Setup ---
 
-const bot = new Telegraf(TELEGRAM_BOT_TOKEN);
+const bot = new Telegraf(TELEGRAM_BOT_TOKEN, {
+  handlerTimeout: 1_800_000, // 30 minutes — Claude queries can run long
+});
 
 // Auth middleware — silent reject for unauthorized users
 bot.use((ctx, next) => {
