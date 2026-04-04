@@ -345,8 +345,8 @@
   <div class="container">
     <div class="logo"><img src="logo.png" alt="cogent42" class="nav-logo">cogent42</div>
     <div class="nav-links">
-      <a href="https://github.com/cogent42/cogent42">GitHub</a>
-      <a href="https://github.com/cogent42/cogent42#license">License</a>
+      <a href="https://github.com/cogent42/cogent42.github.io">GitHub</a>
+      <a href="https://github.com/cogent42/cogent42.github.io#license">License</a>
     </div>
   </div>
 </nav>
@@ -360,7 +360,7 @@
     <div class="quickstart">
       <div class="quickstart-label">Quick Start</div>
       <button class="copy-btn" onclick="copySetup()">Copy</button>
-      <pre><span class="cmd">git clone</span> https://github.com/cogent42/cogent42.git
+      <pre><span class="cmd">git clone</span> https://github.com/cogent42/cogent42.github.io.git
 <span class="cmd">cd</span> cogent42
 <span class="cmd">node</span> setup.js  <span class="comment"># interactive — walks you through everything</span></pre>
     </div>
@@ -517,7 +517,7 @@
 
 <script>
 function copySetup() {
-  const text = 'git clone https://github.com/cogent42/cogent42.git\ncd cogent42\nnode setup.js';
+  const text = 'git clone https://github.com/cogent42/cogent42.github.io.git\ncd cogent42\nnode setup.js';
   navigator.clipboard.writeText(text).then(() => {
     const btn = document.querySelector('.copy-btn');
     btn.textContent = 'Copied!';

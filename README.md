@@ -33,7 +33,7 @@ cogent42 is a single-user Telegram bot that gives you complete Claude Code capab
 **Automated setup (recommended):**
 
 ```bash
-git clone https://github.com/cogent42/cogent42.git
+git clone https://github.com/cogent42/cogent42.github.io.git
 cd cogent42
 node setup.js
 ```
@@ -43,7 +43,7 @@ The interactive setup walks you through everything.
 **Manual setup:**
 
 ```bash
-git clone https://github.com/cogent42/cogent42.git
+git clone https://github.com/cogent42/cogent42.github.io.git
 cd cogent42
 cp .env.example .env
 # Edit .env with your tokens
