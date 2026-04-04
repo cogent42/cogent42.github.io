@@ -33,7 +33,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REQUIRED_VARS = [
   "TELEGRAM_BOT_TOKEN",
   "TELEGRAM_USER_ID",
-  "ANTHROPIC_API_KEY",
 ];
 for (const v of REQUIRED_VARS) {
   if (!process.env[v]) {
@@ -298,10 +297,6 @@ async function runQuery(prompt, model) {
     maxTurns: MAX_TURNS,
     abortController: new AbortController(),
     stderr: (data) => console.error("[claude stderr]", data),
-    env: {
-      ...process.env,
-      ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
-    },
   };
 
   // Resume existing session or start new with knowledge

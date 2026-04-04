@@ -49,9 +49,9 @@ node bot.js
 |---|---|---|---|
 | `TELEGRAM_BOT_TOKEN` | Yes | -- | Bot token from [@BotFather](https://t.me/BotFather) |
 | `TELEGRAM_USER_ID` | Yes | -- | Your user ID from [@userinfobot](https://t.me/userinfobot) |
-| `ANTHROPIC_API_KEY` | Yes | -- | API key from [console.anthropic.com](https://console.anthropic.com) |
+| `ANTHROPIC_API_KEY` | No | -- | Only needed if Claude Code CLI is not already authenticated. If you've run `claude` on this server, it already has auth. |
 | `MAX_TURNS` | No | `25` | Max agentic turns per query |
-| `WORKING_DIRECTORY` | No | `/root` | Directory where Claude operates |
+| `WORKING_DIRECTORY` | No | `~` | Directory where Claude operates |
 
 ## Commands
 
