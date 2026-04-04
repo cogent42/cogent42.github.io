@@ -26,7 +26,7 @@ ${BOLD}${CYAN}
   ╚██████╗╚██████╔╝╚██████╔╝███████╗██║ ╚████║   ██║
    ╚═════╝ ╚═════╝  ╚═════╝ ╚══════╝╚═╝  ╚═══╝   ╚═╝
 ${RESET}
-${DIM}  Full Claude Code access to your server via Telegram${RESET}
+${DIM}  Full Claude Code access to your server via Telegram — cogent42${RESET}
 `);
 }
 
@@ -96,12 +96,11 @@ async function setupEnv() {
   info("You'll need:");
   info("  1. A Telegram Bot Token (from @BotFather on Telegram)");
   info("  2. Your Telegram User ID (from @userinfobot on Telegram)");
-  info("  3. An Anthropic API Key (from console.anthropic.com)");
+  info("  3. Claude Code CLI authenticated (just run 'claude' and sign in)");
   console.log();
 
   const botToken = await ask(`    ${BOLD}Telegram Bot Token:${RESET} `);
   const userId = await ask(`    ${BOLD}Telegram User ID:${RESET} `);
-  const apiKey = await ask(`    ${BOLD}Anthropic API Key:${RESET} `);
   const workDir = await ask(
     `    ${BOLD}Working directory${RESET} ${DIM}(default: /root):${RESET} `
   );
@@ -109,12 +108,22 @@ async function setupEnv() {
     `    ${BOLD}Max turns per query${RESET} ${DIM}(default: 25):${RESET} `
   );
 
+  console.log();
+  info("Bot identity (optional):");
+  const botName = await ask(
+    `    ${BOLD}Bot name${RESET} ${DIM}(default: cogent42):${RESET} `
+  );
+  const botPersonality = await ask(
+    `    ${BOLD}Bot personality${RESET} ${DIM}(optional — e.g. "concise and direct" or blank to skip):${RESET} `
+  );
+
   const env = [
     `TELEGRAM_BOT_TOKEN=${botToken}`,
     `TELEGRAM_USER_ID=${userId}`,
-    `ANTHROPIC_API_KEY=${apiKey}`,
     `MAX_TURNS=${maxTurns || "25"}`,
     `WORKING_DIRECTORY=${workDir || "/root"}`,
+    `BOT_NAME=${botName || "cogent42"}`,
+    `BOT_PERSONALITY=${botPersonality || ""}`,
   ].join("\n");
 
   writeFileSync(envPath, env + "\n");
@@ -124,9 +133,11 @@ async function setupEnv() {
 async function checkClaudeCode() {
   step(4, "Checking Claude Code CLI");
 
+  let cliInstalled = false;
   try {
     execSync("claude --version", { stdio: "pipe" });
     success("Claude Code CLI is installed");
+    cliInstalled = true;
   } catch {
     warn("Claude Code CLI is not installed. The SDK requires it.");
     info("Install it with: npm install -g @anthropic-ai/claude-code");
@@ -135,10 +146,17 @@ async function checkClaudeCode() {
       try {
         execSync("npm install -g @anthropic-ai/claude-code", { stdio: "inherit" });
         success("Claude Code CLI installed");
+        cliInstalled = true;
       } catch {
         warn("Failed to install. Try: sudo npm install -g @anthropic-ai/claude-code");
       }
     }
+  }
+
+  if (cliInstalled) {
+    info("Make sure Claude Code is authenticated with your subscription.");
+    info("If you haven't yet, run: claude");
+    info("It will open a browser to sign in with your Claude account.");
   }
 }
 
@@ -163,7 +181,7 @@ async function checkPm2() {
 }
 
 async function startBot() {
-  step(6, "Starting Cogent");
+  step(6, "Starting cogent42");
 
   console.log();
   info("How would you like to run the bot?");
@@ -177,12 +195,12 @@ async function startBot() {
     try {
       execSync("pm2 start ecosystem.config.cjs", { cwd: __dirname, stdio: "inherit" });
       console.log();
-      success("Cogent is running!");
+      success("cogent42 is running!");
       info("Useful commands:");
-      info("  pm2 logs cogent    - View logs");
-      info("  pm2 status         - Check status");
-      info("  pm2 restart cogent - Restart");
-      info("  pm2 stop cogent    - Stop");
+      info("  pm2 logs cogent42    - View logs");
+      info("  pm2 status           - Check status");
+      info("  pm2 restart cogent42 - Restart");
+      info("  pm2 stop cogent42    - Stop");
       info("  pm2 save           - Save process list for reboot survival");
       info("  pm2 startup        - Generate startup script");
     } catch {

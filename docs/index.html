@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cogent - Claude Code on your server, from Telegram</title>
+  <meta name="description" content="Full Claude Code access on any server, controlled entirely from Telegram. Bash, file ops, search, persistent memory — set up in 2 minutes.">
+  <meta property="og:title" content="Cogent - Claude Code on your server, from Telegram">
+  <meta property="og:description" content="Full Claude Code access on any server, controlled entirely from Telegram.">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#0f0f0f">
+  <link rel="icon" type="image/png" href="logo.png">
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --border: #222;
+      --text: #e0e0e0;
+      --text-muted: #888;
+      --accent: #d4a056;
+      --accent-dim: #d4a05620;
+      --code-bg: #111;
+      --green: #4ade80;
+      --blue: #60a5fa;
+      --red: #f87171;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Nav */
+    nav {
+      padding: 20px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    nav .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .nav-logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+    }
+    .nav-links { display: flex; gap: 20px; font-size: 0.875rem; }
+    .nav-links a { color: var(--text-muted); }
+    .nav-links a:hover { color: var(--text); text-decoration: none; }
+
+    /* Hero */
+    .hero {
+      padding: 80px 0 60px;
+      text-align: center;
+    }
+    .hero-logo {
+      width: 120px;
+      height: 120px;
+      margin-bottom: 24px;
+      border-radius: 24px;
+    }
+    .hero h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 16px;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero p {
+      font-size: 1.125rem;
+      color: var(--text-muted);
+      max-width: 520px;
+      margin: 0 auto 32px;
+    }
+
+    /* Quick start block */
+    .quickstart {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px 28px;
+      text-align: left;
+      margin: 0 auto 20px;
+      max-width: 520px;
+      position: relative;
+    }
+    .quickstart-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin-bottom: 14px;
+    }
+    .quickstart pre {
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: var(--text);
+      overflow-x: auto;
+    }
+    .quickstart .comment { color: var(--text-muted); }
+    .quickstart .cmd { color: var(--green); }
+
+    .copy-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: var(--border);
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .copy-btn:hover { color: var(--text); background: #333; }
+
+    .prereqs {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .prereqs code {
+      background: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.8rem;
+    }
+
+    /* Features */
+    .features {
+      padding: 40px 0 60px;
+      border-top: 1px solid var(--border);
+    }
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+    }
+    .feature-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .feature {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+    }
+    .feature-icon {
+      font-size: 1.25rem;
+      margin-bottom: 8px;
+    }
+    .feature h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .feature p {
+      font-size: 0.825rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* How it works */
+    .how-it-works {
+      padding: 40px 0 60px;
+      border-top: 1px solid var(--border);
+    }
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .step {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent-dim);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+    .step-content h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .step-content p {
+      font-size: 0.825rem;
+      color: var(--text-muted);
+    }
+
+    /* Commands */
+    .commands {
+      padding: 40px 0 60px;
+      border-top: 1px solid var(--border);
+    }
+    .cmd-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .cmd-table td {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.875rem;
+    }
+    .cmd-table td:first-child {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.825rem;
+      color: var(--accent);
+      width: 140px;
+    }
+    .cmd-table td:last-child { color: var(--text-muted); }
+
+    /* Env vars */
+    .env-section {
+      padding: 40px 0 60px;
+      border-top: 1px solid var(--border);
+    }
+    .env-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .env-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 18px;
+    }
+    .env-item-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+    .env-name {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.825rem;
+      color: var(--text);
+    }
+    .env-badge {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+    .env-badge.required { background: #f8717120; color: var(--red); }
+    .env-badge.optional { background: #60a5fa20; color: var(--blue); }
+    .env-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Warning */
+    .warning {
+      background: #f8717110;
+      border: 1px solid #f8717130;
+      border-radius: 8px;
+      padding: 18px 22px;
+      margin: 40px 0;
+    }
+    .warning-title {
+      font-size: 0.825rem;
+      font-weight: 600;
+      color: var(--red);
+      margin-bottom: 6px;
+    }
+    .warning p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Footer */
+    footer {
+      padding: 30px 0;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+    footer p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .hero { padding: 50px 0 40px; }
+      .hero h1 { font-size: 1.75rem; }
+      .hero p { font-size: 1rem; }
+      .feature-grid { grid-template-columns: 1fr; }
+      .quickstart { padding: 18px 20px; }
+      .quickstart pre { font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="container">
+    <div class="logo"><img src="logo.png" alt="cogent42" class="nav-logo">cogent42</div>
+    <div class="nav-links">
+      <a href="https://github.com/cogent42/cogent42">GitHub</a>
+      <a href="https://github.com/cogent42/cogent42#license">License</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="container">
+    <img src="logo.png" alt="cogent42" class="hero-logo">
+    <h1>Claude Code on your server,<br><span>from Telegram</span></h1>
+    <p>Full bash, file operations, and search on any machine you own. Runs on your existing Claude Code plan &mdash; no extra API costs. Set up in 2 minutes.</p>
+
+    <div class="quickstart">
+      <div class="quickstart-label">Quick Start</div>
+      <button class="copy-btn" onclick="copySetup()">Copy</button>
+      <pre><span class="cmd">git clone</span> https://github.com/cogent42/cogent42.git
+<span class="cmd">cd</span> cogent42
+<span class="cmd">node</span> setup.js  <span class="comment"># interactive — walks you through everything</span></pre>
+    </div>
+
+    <p class="prereqs">
+      Requires Node.js 18+, a <a href="https://t.me/BotFather">Telegram bot token</a>, and a <a href="https://claude.ai/claude-code">Claude Code</a> subscription
+    </p>
+  </div>
+</section>
+
+<section class="features">
+  <div class="container">
+    <div class="section-title">What you get</div>
+    <div class="feature-grid">
+      <div class="feature">
+        <div class="feature-icon">&gt;_</div>
+        <h3>Full server access</h3>
+        <p>Bash execution, file read/write/edit, code search. Everything Claude Code can do, from your phone.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">&#x1f9e0;</div>
+        <h3>Persistent memory</h3>
+        <p>Sessions survive restarts. Facts and decisions are extracted into a knowledge base that carries across conversations.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">&#x1f4b3;</div>
+        <h3>Uses your existing plan</h3>
+        <p>Runs on your Claude Code subscription. No separate API key or pay-per-token billing. Just authenticate <code>claude</code> on your server and go.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">&#x1f512;</div>
+        <h3>Single-user lock</h3>
+        <p>Locked to your Telegram user ID. Other users are silently rejected. Your server, your bot.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">&#x1f4ce;</div>
+        <h3>Photos &amp; documents</h3>
+        <p>Send images and files via Telegram. Claude processes them on your server — screenshot debugging, document analysis, anything.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">&#x21c5;</div>
+        <h3>Smart model routing</h3>
+        <p>Defaults to Sonnet 4.6 for speed. Auto-escalates to Opus 4.6 when a query needs more. Switch manually with <code>/opus</code> and <code>/sonnet</code>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="how-it-works">
+  <div class="container">
+    <div class="section-title">How it works</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h3>Get your tokens</h3>
+          <p>Create a bot via <a href="https://t.me/BotFather">@BotFather</a> on Telegram. Have your <a href="https://claude.ai/claude-code">Claude Code</a> subscription ready.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h3>Run the setup</h3>
+          <p><code>node setup.js</code> installs the Claude Code CLI if needed, authenticates with your subscription, configures the bot, and optionally sets up PM2.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h3>Message your bot</h3>
+          <p>Open Telegram, send a message. Claude Code executes on your server and replies with the result.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="commands">
+  <div class="container">
+    <div class="section-title">Commands</div>
+    <table class="cmd-table">
+      <tr><td>/start</td><td>Welcome message and command reference</td></tr>
+      <tr><td>/reset</td><td>Extract knowledge, archive session, start fresh</td></tr>
+      <tr><td>/cancel</td><td>Abort the current in-flight query</td></tr>
+      <tr><td>/status</td><td>Uptime, disk, memory, model, and session info</td></tr>
+      <tr><td>/history</td><td>Session statistics</td></tr>
+      <tr><td>/opus</td><td>Switch to Claude Opus 4.6</td></tr>
+      <tr><td>/sonnet</td><td>Switch to Claude Sonnet 4.6</td></tr>
+      <tr><td>/knowledge</td><td>View all stored knowledge entries</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="env-section">
+  <div class="container">
+    <div class="section-title">Configuration</div>
+    <div class="env-grid">
+      <div class="env-item">
+        <div class="env-item-header">
+          <span class="env-name">TELEGRAM_BOT_TOKEN</span>
+          <span class="env-badge required">required</span>
+        </div>
+        <div class="env-desc">Bot token from <a href="https://t.me/BotFather">@BotFather</a></div>
+      </div>
+      <div class="env-item">
+        <div class="env-item-header">
+          <span class="env-name">TELEGRAM_USER_ID</span>
+          <span class="env-badge required">required</span>
+        </div>
+        <div class="env-desc">Your Telegram user ID from <a href="https://t.me/userinfobot">@userinfobot</a></div>
+      </div>
+      <div class="env-item">
+        <div class="env-item-header">
+          <span class="env-name">MAX_TURNS</span>
+          <span class="env-badge optional">optional</span>
+        </div>
+        <div class="env-desc">Max agentic turns per query. Default: 25</div>
+      </div>
+      <div class="env-item">
+        <div class="env-item-header">
+          <span class="env-name">WORKING_DIRECTORY</span>
+          <span class="env-badge optional">optional</span>
+        </div>
+        <div class="env-desc">Directory where Claude operates. Default: ~</div>
+      </div>
+      <div class="env-item">
+        <div class="env-item-header">
+          <span class="env-name">BOT_NAME</span>
+          <span class="env-badge optional">optional</span>
+        </div>
+        <div class="env-desc">Display name for your bot. Default: cogent42</div>
+      </div>
+      <div class="env-item">
+        <div class="env-item-header">
+          <span class="env-name">BOT_PERSONALITY</span>
+          <span class="env-badge optional">optional</span>
+        </div>
+        <div class="env-desc">Optional personality prompt (e.g. "concise and direct")</div>
+      </div>
+    </div>
+
+    <div class="warning">
+      <div class="warning-title">Security note</div>
+      <p>Cogent runs with <code>bypassPermissions</code> mode, giving Claude unrestricted access to your server &mdash; bash, filesystem, everything. Only run this on machines you're comfortable giving full access to. The bot is locked to a single Telegram user ID; unauthorized users are silently rejected.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>MIT License &middot; Built by <a href="https://github.com/cogent42">cogent42</a></p>
+  </div>
+</footer>
+
+<script>
+function copySetup() {
+  const text = 'git clone https://github.com/cogent42/cogent42.git\ncd cogent42\nnode setup.js';
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+</script>
+
+</body>
+</html>

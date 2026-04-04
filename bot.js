@@ -2,6 +2,13 @@ import "dotenv/config";
 import { homedir } from "node:os";
 import { Telegraf } from "telegraf";
 import { query } from "@anthropic-ai/claude-agent-sdk";
+import { readFileSync as readPkgFile } from "node:fs";
+import { join as joinPkg, dirname as dirnamePkg } from "node:path";
+import { fileURLToPath as fileURLToPathPkg } from "node:url";
+
+// Version from package.json
+const __dirnamePkg = dirnamePkg(fileURLToPathPkg(import.meta.url));
+const VERSION = JSON.parse(readPkgFile(joinPkg(__dirnamePkg, "package.json"), "utf-8")).version;
 
 // Ensure common global npm binary paths are in PATH (needed for PM2/systemd)
 const extraPaths = [
@@ -12,6 +19,7 @@ const extraPaths = [
 ];
 const currentPath = process.env.PATH || "";
 process.env.PATH = [...extraPaths, currentPath].join(":");
+
 import {
   readFileSync,
   writeFileSync,
@@ -30,10 +38,7 @@ import { randomUUID } from "node:crypto";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const REQUIRED_VARS = [
-  "TELEGRAM_BOT_TOKEN",
-  "TELEGRAM_USER_ID",
-];
+const REQUIRED_VARS = ["TELEGRAM_BOT_TOKEN", "TELEGRAM_USER_ID"];
 for (const v of REQUIRED_VARS) {
   if (!process.env[v]) {
     console.error(`Missing required env var: ${v}`);
@@ -44,11 +49,17 @@ for (const v of REQUIRED_VARS) {
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_USER_ID = parseInt(process.env.TELEGRAM_USER_ID, 10);
 const MAX_TURNS = parseInt(process.env.MAX_TURNS || "25", 10);
-const WORKING_DIRECTORY = (process.env.WORKING_DIRECTORY || homedir()).replace(/^~/, homedir());
+const WORKING_DIRECTORY = (process.env.WORKING_DIRECTORY || homedir()).replace(
+  /^~/,
+  homedir()
+);
+const BOT_NAME = process.env.BOT_NAME || "cogent42";
+const BOT_PERSONALITY = process.env.BOT_PERSONALITY || "";
 const MEMORY_DIR = join(__dirname, "memory");
 const KNOWLEDGE_DIR = join(__dirname, "knowledge");
 const KNOWLEDGE_FILE = join(KNOWLEDGE_DIR, "knowledge.json");
-const EXTRACTION_INTERVAL = 10; // extract knowledge every N turns
+const EXTRACTION_INTERVAL = 10;
+const MAX_KNOWLEDGE_ENTRIES = 100;
 
 mkdirSync(MEMORY_DIR, { recursive: true });
 mkdirSync(KNOWLEDGE_DIR, { recursive: true });
@@ -58,6 +69,8 @@ mkdirSync(KNOWLEDGE_DIR, { recursive: true });
 let currentSessionId = null;
 let currentModel = "claude-sonnet-4-6";
 let processing = false;
+let currentAbortController = null;
+let autoEscalated = false;
 
 // --- Session Memory ---
 
@@ -77,7 +90,10 @@ function loadSession(sessionId) {
 
 function saveSession(session) {
   session.updatedAt = new Date().toISOString();
-  writeFileSync(getSessionPath(session.sessionId), JSON.stringify(session, null, 2));
+  writeFileSync(
+    getSessionPath(session.sessionId),
+    JSON.stringify(session, null, 2)
+  );
 }
 
 function createSession(sessionId) {
@@ -196,7 +212,6 @@ Return empty array [] if nothing new worth remembering. No other text.`;
       }
     }
 
-    // Parse JSON from result
     const jsonMatch = resultText.match(/\[[\s\S]*\]/);
     if (jsonMatch) {
       const newEntries = JSON.parse(jsonMatch[0]);
@@ -210,8 +225,14 @@ Return empty array [] if nothing new worth remembering. No other text.`;
             timestamp: new Date().toISOString(),
           });
         }
+        // Prune oldest entries if over limit
+        if (existing.entries.length > MAX_KNOWLEDGE_ENTRIES) {
+          existing.entries = existing.entries.slice(-MAX_KNOWLEDGE_ENTRIES);
+        }
         saveKnowledge(existing);
-        console.log(`Extracted ${newEntries.length} knowledge entries from session ${sessionId}`);
+        console.log(
+          `Extracted ${newEntries.length} knowledge entries from session ${sessionId}`
+        );
       }
     }
   } catch (err) {
@@ -220,17 +241,28 @@ Return empty array [] if nothing new worth remembering. No other text.`;
 }
 
 function buildSystemPrompt() {
-  const knowledge = loadKnowledge();
-  if (knowledge.entries.length === 0) return undefined;
+  const parts = [];
 
-  const facts = knowledge.entries
-    .map((e) => `- [${e.category}] ${e.fact}`)
-    .join("\n");
+  if (BOT_PERSONALITY) {
+    parts.push(`Your personality: ${BOT_PERSONALITY}`);
+  }
+
+  const knowledge = loadKnowledge();
+  if (knowledge.entries.length > 0) {
+    const facts = knowledge.entries
+      .map((e) => `- [${e.category}] ${e.fact}`)
+      .join("\n");
+    parts.push(
+      `You have persistent memory from previous sessions on this server:\n\n${facts}\n\nUse this context but verify if unsure — things may have changed.`
+    );
+  }
+
+  if (parts.length === 0) return undefined;
 
   return {
     type: "preset",
     preset: "claude_code",
-    append: `\n\nYou have persistent memory from previous sessions on this server:\n\n${facts}\n\nUse this context but verify if unsure — things may have changed.`,
+    append: "\n\n" + parts.join("\n\n"),
   };
 }
 
@@ -243,6 +275,53 @@ function startTyping(ctx) {
   return () => clearInterval(interval);
 }
 
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function markdownToHtml(text) {
+  const blocks = [];
+
+  // Extract fenced code blocks
+  let result = text.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
+    const idx = blocks.length;
+    blocks.push(
+      `<pre><code${lang ? ` class="language-${lang}"` : ""}>${escapeHtml(code)}</code></pre>`
+    );
+    return `\x00B${idx}\x00`;
+  });
+
+  // Extract inline code
+  result = result.replace(/`([^`]+)`/g, (_, code) => {
+    const idx = blocks.length;
+    blocks.push(`<code>${escapeHtml(code)}</code>`);
+    return `\x00B${idx}\x00`;
+  });
+
+  // Escape HTML in remaining text
+  result = escapeHtml(result);
+
+  // Convert markdown formatting
+  result = result.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+  result = result.replace(/\*(.+?)\*/g, "<i>$1</i>");
+  result = result.replace(/~~(.+?)~~/g, "<s>$1</s>");
+  result = result.replace(
+    /\[([^\]]+)\]\(([^)]+)\)/g,
+    '<a href="$2">$1</a>'
+  );
+
+  // Re-insert code blocks
+  result = result.replace(
+    /\x00B(\d+)\x00/g,
+    (_, idx) => blocks[parseInt(idx)]
+  );
+
+  return result;
+}
+
 function chunkMessage(text, maxLen = 4000) {
   if (text.length <= maxLen) return [text];
 
@@ -253,7 +332,6 @@ function chunkMessage(text, maxLen = 4000) {
   for (const line of lines) {
     if (current.length + line.length + 1 > maxLen) {
       if (current) chunks.push(current);
-      // Handle single lines longer than maxLen
       if (line.length > maxLen) {
         for (let i = 0; i < line.length; i += maxLen) {
           chunks.push(line.slice(i, i + maxLen));
@@ -274,9 +352,9 @@ async function sendResponse(ctx, text) {
   const chunks = chunkMessage(text || "Done (no output).");
   for (const chunk of chunks) {
     try {
-      await ctx.reply(chunk, { parse_mode: "MarkdownV2" });
+      await ctx.reply(markdownToHtml(chunk), { parse_mode: "HTML" });
     } catch {
-      // MarkdownV2 failed — send as plain text
+      // HTML parse failed — send as plain text
       try {
         await ctx.reply(chunk);
       } catch (err) {
@@ -286,21 +364,56 @@ async function sendResponse(ctx, text) {
   }
 }
 
+async function downloadTelegramFile(ctx, fileId, filename) {
+  const fileLink = await ctx.telegram.getFileLink(fileId);
+  const response = await fetch(fileLink.href);
+  if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+  const buffer = Buffer.from(await response.arrayBuffer());
+  const destPath = join(WORKING_DIRECTORY, filename);
+  writeFileSync(destPath, buffer);
+  return destPath;
+}
+
+// --- Processing Lock ---
+
+async function withProcessingLock(ctx, fn) {
+  if (processing) {
+    return ctx.reply("Still working on your previous message...");
+  }
+  processing = true;
+  try {
+    await fn();
+  } catch (err) {
+    if (err.name === "AbortError" || err.message?.includes("aborted")) {
+      await ctx.reply("Query cancelled.");
+    } else {
+      console.error("Error:", err);
+      await ctx.reply("Error: " + (err.message || "Unknown error"));
+    }
+  } finally {
+    processing = false;
+    currentAbortController = null;
+  }
+}
+
 // --- Claude Integration ---
 
-async function runQuery(prompt, model) {
+async function runQuery(prompt, model, isRetry = false) {
+  const abortController = new AbortController();
+  currentAbortController = abortController;
+
   const options = {
     cwd: WORKING_DIRECTORY,
     permissionMode: "bypassPermissions",
     allowDangerouslySkipPermissions: true,
     model,
     maxTurns: MAX_TURNS,
-    abortController: new AbortController(),
+    abortController,
     stderr: (data) => console.error("[claude stderr]", data),
   };
 
-  // Resume existing session or start new with knowledge
-  if (currentSessionId) {
+  // Resume existing session or start new with knowledge + personality
+  if (currentSessionId && !isRetry) {
     options.resume = currentSessionId;
   } else {
     const systemPrompt = buildSystemPrompt();
@@ -308,7 +421,7 @@ async function runQuery(prompt, model) {
   }
 
   // 5 minute timeout
-  const timeout = setTimeout(() => options.abortController.abort(), 300000);
+  const timeout = setTimeout(() => abortController.abort(), 300000);
 
   let responseText = "";
   let sessionId = currentSessionId;
@@ -327,12 +440,25 @@ async function runQuery(prompt, model) {
         if (message.subtype === "success") {
           responseText = message.result || responseText;
         } else {
-          // Error result — throw to trigger auto-escalation
           const errorMsg = message.errors?.join(", ") || message.subtype;
           throw new Error(`Claude error: ${errorMsg}`);
         }
       }
     }
+  } catch (err) {
+    // If session resume failed, retry with a fresh session (once)
+    if (currentSessionId && !isRetry && !abortController.signal.aborted) {
+      console.error(
+        "Session resume may have failed, retrying fresh:",
+        err.message
+      );
+      currentSessionId = null;
+      saveCurrentSessionId();
+      clearTimeout(timeout);
+      currentAbortController = null;
+      return runQuery(prompt, model, true);
+    }
+    throw err;
   } finally {
     clearTimeout(timeout);
   }
@@ -349,11 +475,11 @@ async function askClaude(prompt, ctx) {
     try {
       result = await runQuery(prompt, currentModel);
     } catch (err) {
-      // Auto-escalate from Sonnet to Opus on failure
-      if (currentModel === "claude-sonnet-4-6") {
-        await ctx.reply("Escalating to Opus 4.6...");
-        currentModel = "claude-opus-4-6";
-        result = await runQuery(prompt, currentModel);
+      // Auto-escalate from Sonnet to Opus on failure (not on cancel)
+      if (currentModel === "claude-sonnet-4-6" && err.name !== "AbortError") {
+        await ctx.reply("Escalating to Opus 4.6 for this query...");
+        autoEscalated = true;
+        result = await runQuery(prompt, "claude-opus-4-6");
       } else {
         throw err;
       }
@@ -367,10 +493,15 @@ async function askClaude(prompt, ctx) {
 
     // Auto-extract knowledge at interval
     if (session.turnCount > 0 && session.turnCount % EXTRACTION_INTERVAL === 0) {
-      // Run extraction in background — don't block the response
       extractKnowledge(sessionId).catch((err) =>
         console.error("Background knowledge extraction failed:", err.message)
       );
+    }
+
+    // Auto-revert to Sonnet after a successful auto-escalation
+    if (autoEscalated) {
+      currentModel = "claude-sonnet-4-6";
+      autoEscalated = false;
     }
 
     return responseText;
@@ -393,11 +524,13 @@ bot.use((ctx, next) => {
 
 bot.command("start", (ctx) => {
   ctx.reply(
-    `Welcome to Cogent!\n\n` +
+    `Welcome to ${BOT_NAME}! (v${VERSION})\n\n` +
       `I give you full Claude Code access to this server.\n` +
-      `Send any message and Claude will process it with full system access.\n\n` +
+      `Send any message and Claude will process it with full system access.\n` +
+      `You can also send photos and documents.\n\n` +
       `Commands:\n` +
       `/reset - Start a fresh conversation\n` +
+      `/cancel - Cancel the current query\n` +
       `/status - System information\n` +
       `/history - Conversation history stats\n` +
       `/opus - Switch to Opus 4.6\n` +
@@ -415,13 +548,24 @@ bot.command("reset", async (ctx) => {
     }
     archiveCurrentSession();
     currentModel = "claude-sonnet-4-6";
+    autoEscalated = false;
     await ctx.reply("Session reset. Starting fresh with Sonnet 4.6.");
   } catch (err) {
-    await ctx.reply("Reset done (knowledge extraction failed: " + err.message + ")");
+    await ctx.reply(
+      "Reset done (knowledge extraction failed: " + err.message + ")"
+    );
     archiveCurrentSession();
   } finally {
     stopTyping();
   }
+});
+
+bot.command("cancel", async (ctx) => {
+  if (!processing || !currentAbortController) {
+    return ctx.reply("Nothing to cancel.");
+  }
+  currentAbortController.abort();
+  await ctx.reply("Cancelling...");
 });
 
 bot.command("status", (ctx) => {
@@ -446,11 +590,12 @@ bot.command("status", (ctx) => {
     const knowledge = loadKnowledge();
 
     sysInfo =
-      `Bot uptime: ${hours}h ${mins}m\n` +
+      `${BOT_NAME} v${VERSION}\n` +
+      `Uptime: ${hours}h ${mins}m\n` +
       `Model: ${currentModel}\n` +
       `Session: ${currentSessionId || "none"}\n` +
       `Working dir: ${WORKING_DIRECTORY}\n` +
-      `Knowledge entries: ${knowledge.entries.length}\n\n` +
+      `Knowledge: ${knowledge.entries.length}/${MAX_KNOWLEDGE_ENTRIES} entries\n\n` +
       `Disk:\n${diskInfo}\n\n` +
       `Memory:\n${memInfo}`;
   } catch (err) {
@@ -466,8 +611,12 @@ bot.command("history", (ctx) => {
   }
 
   const totalSize = sessions.reduce((acc, s) => acc + s.size, 0);
-  const active = sessions.filter((s) => !s.filename.includes("archived")).length;
-  const archived = sessions.filter((s) => s.filename.includes("archived")).length;
+  const active = sessions.filter(
+    (s) => !s.filename.includes("archived")
+  ).length;
+  const archived = sessions.filter((s) =>
+    s.filename.includes("archived")
+  ).length;
 
   ctx.reply(
     `Sessions: ${sessions.length} total (${active} active, ${archived} archived)\n` +
@@ -478,11 +627,13 @@ bot.command("history", (ctx) => {
 
 bot.command("opus", (ctx) => {
   currentModel = "claude-opus-4-6";
+  autoEscalated = false;
   ctx.reply("Switched to Opus 4.6");
 });
 
 bot.command("sonnet", (ctx) => {
   currentModel = "claude-sonnet-4-6";
+  autoEscalated = false;
   ctx.reply("Switched to Sonnet 4.6");
 });
 
@@ -499,33 +650,75 @@ bot.command("knowledge", (ctx) => {
   ctx.reply(`Stored knowledge (${knowledge.entries.length} entries):\n\n${text}`);
 });
 
-// --- Text Handler ---
+// --- Message Handlers ---
 
-bot.on("text", async (ctx) => {
-  if (processing) {
-    return ctx.reply("Still working on your previous message...");
-  }
-
-  processing = true;
-  try {
+bot.on("text", (ctx) =>
+  withProcessingLock(ctx, async () => {
     const response = await askClaude(ctx.message.text, ctx);
     await sendResponse(ctx, response);
-  } catch (err) {
-    console.error("Error handling message:", err);
-    await ctx.reply("Error: " + (err.message || "Unknown error"));
-  } finally {
-    processing = false;
-  }
+  })
+);
+
+bot.on("photo", (ctx) =>
+  withProcessingLock(ctx, async () => {
+    const photo = ctx.message.photo[ctx.message.photo.length - 1];
+    const filename = `photo_${Date.now()}.jpg`;
+    const filePath = await downloadTelegramFile(ctx, photo.file_id, filename);
+    const caption = ctx.message.caption || "";
+    const prompt = `User sent a photo (saved at ${filePath}).${caption ? ` Caption: ${caption}` : ""} Describe or process the image as needed.`;
+    const response = await askClaude(prompt, ctx);
+    await sendResponse(ctx, response);
+  })
+);
+
+bot.on("document", (ctx) =>
+  withProcessingLock(ctx, async () => {
+    const doc = ctx.message.document;
+    const filename = doc.file_name || `file_${Date.now()}`;
+    const filePath = await downloadTelegramFile(ctx, doc.file_id, filename);
+    const caption = ctx.message.caption || "";
+    const prompt = `User sent a file: ${filename} (saved at ${filePath}, ${(doc.file_size / 1024).toFixed(1)} KB).${caption ? ` Caption: ${caption}` : ""} Process the file as needed.`;
+    const response = await askClaude(prompt, ctx);
+    await sendResponse(ctx, response);
+  })
+);
+
+bot.on(["voice", "video", "video_note", "sticker", "animation"], (ctx) => {
+  ctx.reply(
+    "I can handle text messages, photos, and documents. Voice, video, and stickers aren't supported yet."
+  );
 });
 
 // --- Launch ---
 
 loadCurrentSessionId();
-bot.launch();
-console.log(`Cogent started | Model: ${currentModel} | CWD: ${WORKING_DIRECTORY}`);
 
-process.once("SIGINT", () => bot.stop("SIGINT"));
-process.once("SIGTERM", () => bot.stop("SIGTERM"));
+// Register slash commands in Telegram's menu
+bot.telegram
+  .setMyCommands([
+    { command: "start", description: "Welcome message" },
+    { command: "reset", description: "Start a fresh conversation" },
+    { command: "cancel", description: "Cancel the current query" },
+    { command: "status", description: "System information" },
+    { command: "history", description: "Conversation history stats" },
+    { command: "opus", description: "Switch to Opus 4.6" },
+    { command: "sonnet", description: "Switch to Sonnet 4.6" },
+    { command: "knowledge", description: "View stored knowledge" },
+  ])
+  .catch((err) => console.error("Failed to set bot commands:", err.message));
+
+bot.launch();
+console.log(
+  `${BOT_NAME} v${VERSION} started | Model: ${currentModel} | CWD: ${WORKING_DIRECTORY}`
+);
+
+function gracefulShutdown(signal) {
+  if (currentAbortController) currentAbortController.abort();
+  bot.stop(signal);
+}
+
+process.once("SIGINT", () => gracefulShutdown("SIGINT"));
+process.once("SIGTERM", () => gracefulShutdown("SIGTERM"));
 
 process.on("uncaughtException", (err) => {
   console.error("Uncaught exception:", err);

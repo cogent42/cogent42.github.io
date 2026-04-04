@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: "cogent",
+      name: "cogent42",
       script: "bot.js",
       watch: false,
       autorestart: true,
