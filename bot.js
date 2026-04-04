@@ -1,6 +1,17 @@
 import "dotenv/config";
+import { homedir } from "node:os";
 import { Telegraf } from "telegraf";
 import { query } from "@anthropic-ai/claude-agent-sdk";
+
+// Ensure common global npm binary paths are in PATH (needed for PM2/systemd)
+const extraPaths = [
+  `${homedir()}/.npm-global/bin`,
+  "/usr/local/bin",
+  `${homedir()}/.local/bin`,
+  `${homedir()}/.nvm/versions/node/${process.version}/bin`,
+];
+const currentPath = process.env.PATH || "";
+process.env.PATH = [...extraPaths, currentPath].join(":");
 import {
   readFileSync,
   writeFileSync,
@@ -286,6 +297,7 @@ async function runQuery(prompt, model) {
     model,
     maxTurns: MAX_TURNS,
     abortController: new AbortController(),
+    stderr: (data) => console.error("[claude stderr]", data),
   };
 
   // Resume existing session or start new with knowledge

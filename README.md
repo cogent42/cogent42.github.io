@@ -16,6 +16,7 @@ Cogent is a single-user Telegram bot that gives you complete Claude Code capabil
 ## Prerequisites
 
 - Node.js 18+
+- Claude Code CLI (`npm install -g @anthropic-ai/claude-code`)
 - A Telegram bot token (from [@BotFather](https://t.me/BotFather))
 - An Anthropic API key (from [console.anthropic.com](https://console.anthropic.com))
 

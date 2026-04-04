@@ -121,8 +121,29 @@ async function setupEnv() {
   success(".env file created");
 }
 
+async function checkClaudeCode() {
+  step(4, "Checking Claude Code CLI");
+
+  try {
+    execSync("claude --version", { stdio: "pipe" });
+    success("Claude Code CLI is installed");
+  } catch {
+    warn("Claude Code CLI is not installed. The SDK requires it.");
+    info("Install it with: npm install -g @anthropic-ai/claude-code");
+    const install = await ask("    Install Claude Code CLI globally? (Y/n): ");
+    if (install.toLowerCase() !== "n") {
+      try {
+        execSync("npm install -g @anthropic-ai/claude-code", { stdio: "inherit" });
+        success("Claude Code CLI installed");
+      } catch {
+        warn("Failed to install. Try: sudo npm install -g @anthropic-ai/claude-code");
+      }
+    }
+  }
+}
+
 async function checkPm2() {
-  step(4, "Checking PM2");
+  step(5, "Checking PM2");
 
   try {
     execSync("pm2 --version", { stdio: "pipe" });
@@ -142,7 +163,7 @@ async function checkPm2() {
 }
 
 async function startBot() {
-  step(5, "Starting Cogent");
+  step(6, "Starting Cogent");
 
   console.log();
   info("How would you like to run the bot?");
@@ -188,6 +209,7 @@ async function main() {
   await checkNodeVersion();
   await installDependencies();
   await setupEnv();
+  await checkClaudeCode();
   await checkPm2();
   await startBot();
 
