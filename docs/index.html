@@ -199,20 +199,6 @@
     .quickstart .comment { color: var(--text-muted); }
     .quickstart .cmd { color: var(--green); }
 
-    .copy-btn {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      background: var(--border);
-      border: none;
-      color: var(--text-muted);
-      font-size: 0.75rem;
-      padding: 4px 10px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-family: inherit;
-    }
-    .copy-btn:hover { color: var(--text); background: #333; }
 
     .prereqs {
       font-size: 0.8rem;
@@ -522,10 +508,7 @@
 
     <div class="quickstart" id="quickstart">
       <div class="quickstart-label">Install in 2 minutes</div>
-      <button class="copy-btn" onclick="copySetup()">Copy</button>
-      <pre><span class="cmd">curl</span> -fsSL https://raw.githubusercontent.com/cogent42/cogent42/main/install.sh | bash
-<span class="comment"># or manually:</span>
-<span class="cmd">git clone</span> https://github.com/cogent42/cogent42.git
+      <pre><span class="cmd">git clone</span> https://github.com/cogent42/cogent42.git
 <span class="cmd">cd</span> cogent42 && <span class="cmd">node</span> setup.js</pre>
     </div>
 
@@ -789,17 +772,6 @@
   </div>
 </footer>
 
-<script>
-function copySetup() {
-  const text = 'curl -fsSL https://raw.githubusercontent.com/cogent42/cogent42/main/install.sh | bash';
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = document.querySelector('.copy-btn');
-    btn.textContent = 'Copied!';
-    setTimeout(() => btn.textContent = 'Copy', 2000);
-  });
-}
-
-</script>
 
 </body>
 </html>
