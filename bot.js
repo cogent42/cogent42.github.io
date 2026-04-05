@@ -188,7 +188,7 @@ async function extractKnowledge(sessionId) {
     .map((m) => `${m.role}: ${m.content.slice(0, 500)}`)
     .join("\n\n");
 
-  const extractionPrompt = `You are a knowledge extractor. Given this conversation excerpt, extract important facts and decisions worth remembering for future sessions on this server.
+  const extractionPrompt = `You are a knowledge extractor. Given this conversation excerpt, extract important facts, rules, workflows and lessons worth remembering for future sessions on this server.
 
 Current known facts:
 ${existingFacts}
@@ -196,10 +196,26 @@ ${existingFacts}
 Recent conversation:
 ${conversation}
 
-Extract NEW facts not already known. Categories: server, project, preference, decision, bug, config.
-For each fact, assign importance:
-- "permanent" — names, identities, key people, core infrastructure, long-term preferences, important decisions that should never be forgotten
-- "normal" — temporary bugs, one-off tasks, short-term context that may become stale
+Extract NEW entries not already known. Use these categories:
+- "server" — server specs, OS, installed software, ports, services
+- "project" — codebases, repos, tech stack, architecture decisions
+- "preference" — how the user likes things done, tools they prefer
+- "decision" — important choices made that affect future work
+- "bug" — known issues, workarounds for specific problems
+- "config" — API keys, tokens, credentials, environment variables, service configs
+- "rule" — explicit corrections the user made ("no", "wrong", "never do X", "always do Y"), hard constraints, things that must never happen. Extract these even if phrased casually.
+- "workflow" — successful multi-step sequences that worked well, proven approaches to recurring tasks
+- "mistake" — things that failed and how they were fixed, lessons learned from errors
+
+For each entry, assign importance:
+- "permanent" — rules, credentials, core infrastructure, long-term preferences, critical lessons. Never forget these.
+- "normal" — temporary context, one-off tasks, things that may become stale
+
+Pay special attention to:
+- Any correction or pushback from the user → always extract as [rule] permanent
+- Any multi-step task that completed successfully → extract as [workflow]
+- Any failure that was diagnosed and fixed → extract as [mistake]
+- Any credential, token, or API key mentioned → extract as [config] permanent
 
 Return ONLY a valid JSON array: [{"fact": "...", "category": "...", "importance": "permanent"|"normal"}]
 Return empty array [] if nothing new worth remembering. No other text.`;
@@ -278,8 +294,11 @@ ${factsText}
 Your job:
 1. Merge duplicate or highly related facts into single entries
 2. Drop facts that are clearly outdated or no longer relevant
-3. Keep ALL permanent entries unless they're exact duplicates (merge those)
-4. Normal entries about resolved bugs or completed one-off tasks can be dropped
+3. Keep ALL "rule" category entries — these are user corrections and hard constraints, never drop them
+4. Keep ALL permanent entries unless they're exact duplicates (merge those)
+5. Normal entries about resolved bugs or completed one-off tasks can be dropped
+6. Merge related "workflow" entries into comprehensive single workflows
+7. "mistake" entries can be dropped if the same lesson is already captured as a "rule"
 
 Return ONLY a valid JSON array of the consolidated entries: [{"fact": "...", "category": "...", "importance": "permanent"|"normal"}]
 Keep as many entries as needed — just remove genuine redundancy and staleness. Do not drop things that are still useful.`;
@@ -332,11 +351,24 @@ function buildSystemPrompt() {
 
   const knowledge = loadKnowledge();
   if (knowledge.entries.length > 0) {
-    const facts = knowledge.entries
-      .map((e) => `- [${e.category}] ${e.fact}`)
-      .join("\n");
+    // Sort: rules first (highest priority), then permanent, then normal
+    const rules = knowledge.entries.filter((e) => e.category === "rule");
+    const others = knowledge.entries.filter((e) => e.category !== "rule");
+    const sorted = [...rules, ...others];
+
+    const ruleFacts = rules.map((e) => `- ${e.fact}`).join("\n");
+    const otherFacts = others.map((e) => `- [${e.category}] ${e.fact}`).join("\n");
+
+    let memoryBlock = "";
+    if (rules.length > 0) {
+      memoryBlock += `RULES — always follow these, no exceptions:\n${ruleFacts}\n\n`;
+    }
+    if (others.length > 0) {
+      memoryBlock += `Context from previous sessions:\n${otherFacts}`;
+    }
+
     parts.push(
-      `You have persistent memory from previous sessions on this server:\n\n${facts}\n\nUse this context but verify if unsure — things may have changed.`
+      `You have persistent memory from previous sessions on this server:\n\n${memoryBlock}\n\nUse this context but verify if unsure — things may have changed.`
     );
   }
 
@@ -830,7 +862,23 @@ async function askClaude(prompt, ctx) {
     addMessage(sessionId, "user", prompt);
     const session = addMessage(sessionId, "assistant", responseText);
 
-    if (session.turnCount > 0 && session.turnCount % EXTRACTION_INTERVAL === 0) {
+    // Trigger immediate extraction on corrections — don't wait for the interval
+    const CORRECTION_SIGNALS = [
+      "no no", "wrong", "not like that", "never do", "never again",
+      "always do", "don't do", "stop doing", "actually,", "actually -",
+      "that's wrong", "thats wrong", "incorrect", "redo", "you forgot",
+      "i already told", "i told you", "keep this in memory", "remember this",
+      "force push", "never force",
+    ];
+    const isCorrection = CORRECTION_SIGNALS.some((s) =>
+      prompt.toLowerCase().includes(s)
+    );
+
+    if (isCorrection) {
+      extractKnowledge(sessionId).catch((err) =>
+        console.error("Correction-triggered extraction failed:", err.message)
+      );
+    } else if (session.turnCount > 0 && session.turnCount % EXTRACTION_INTERVAL === 0) {
       extractKnowledge(sessionId).catch((err) =>
         console.error("Background knowledge extraction failed:", err.message)
       );
