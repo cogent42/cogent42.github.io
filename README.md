@@ -17,7 +17,7 @@ cogent42 is a single-user Telegram bot that gives you complete Claude Code capab
 - **Scheduled tasks** -- schedule recurring tasks in plain English (e.g. "check disk space every morning at 9am")
 - **Interactive confirmations** -- inline keyboard buttons for destructive actions like /reset and /opus
 - **Persistent memory** -- conversations survive restarts through session resume
-- **Automatic knowledge extraction** -- facts, decisions, and server config are pulled from conversations into a knowledge base (capped at 100 entries, auto-pruned)
+- **Automatic knowledge extraction** -- facts, decisions, and server config are pulled from conversations into a knowledge base (capped at 1,000 entries, auto-pruned)
 - **Cross-session context** -- knowledge is injected into new sessions so Claude remembers what matters
 - **Smart model routing** -- defaults to Claude Sonnet 4.6, auto-escalates to Opus 4.6 on failure, auto-reverts after success
 - **Manual model switching** -- `/opus` and `/sonnet` commands
@@ -25,6 +25,8 @@ cogent42 is a single-user Telegram bot that gives you complete Claude Code capab
 - **Bot personality** -- optional personality config that also evolves through knowledge extraction
 - **Graceful shutdown** -- in-flight queries and scheduled jobs are cleanly aborted on SIGINT/SIGTERM
 - **Session resume fallback** -- automatically starts a fresh session if resume fails
+- **One-command updates** -- `/update` pulls the latest version from GitHub and restarts the bot safely
+- **Automatic session cleanup** -- archived sessions older than 180 days are automatically deleted on startup
 
 ## Prerequisites
 
@@ -81,6 +83,7 @@ node bot.js
 | `/opus` | Switch to Opus 4.6 |
 | `/sonnet` | Switch to Sonnet 4.6 |
 | `/knowledge` | View stored knowledge entries |
+| `/update` | Update bot to the latest version and restart |
 
 ## Scheduling
 
@@ -102,7 +105,7 @@ cogent42 maintains a persistent knowledge base across conversations:
 1. After every **10 conversation turns**, cogent42 extracts facts and decisions from the conversation.
 2. On `/reset`, knowledge is **always extracted** before the session is archived.
 3. Extracted knowledge is **injected into the system prompt** of new sessions.
-4. Knowledge is capped at **100 entries** -- oldest entries are pruned when the limit is reached.
+4. Knowledge is capped at **1,000 entries** -- oldest entries are pruned when the limit is reached.
 5. This keeps the context window small while maintaining persistent memory across conversations.
 
 ## Architecture

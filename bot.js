@@ -30,6 +30,7 @@ import {
   readdirSync,
   statSync,
   existsSync,
+  unlinkSync,
 } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -62,7 +63,8 @@ const KNOWLEDGE_DIR = join(__dirname, "knowledge");
 const KNOWLEDGE_FILE = join(KNOWLEDGE_DIR, "knowledge.json");
 const SCHEDULES_FILE = join(KNOWLEDGE_DIR, "schedules.json");
 const EXTRACTION_INTERVAL = 10;
-const MAX_KNOWLEDGE_ENTRIES = 100;
+const MAX_KNOWLEDGE_ENTRIES = 1000;
+const ARCHIVE_RETENTION_DAYS = 180;
 
 mkdirSync(MEMORY_DIR, { recursive: true });
 mkdirSync(KNOWLEDGE_DIR, { recursive: true });
@@ -154,6 +156,21 @@ function listSessions() {
     const stat = statSync(join(MEMORY_DIR, f));
     return { filename: f, size: stat.size, modified: stat.mtime };
   });
+}
+
+function cleanupArchivedSessions() {
+  const cutoff = Date.now() - ARCHIVE_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+  const files = readdirSync(MEMORY_DIR).filter((f) => f.endsWith("-archived.json"));
+  let removed = 0;
+  for (const f of files) {
+    const filepath = join(MEMORY_DIR, f);
+    const stat = statSync(filepath);
+    if (stat.mtime.getTime() < cutoff) {
+      unlinkSync(filepath);
+      removed++;
+    }
+  }
+  if (removed > 0) console.log(`[cleanup] Removed ${removed} archived session(s) older than ${ARCHIVE_RETENTION_DAYS} days`);
 }
 
 // --- Knowledge System ---
@@ -1235,6 +1252,78 @@ bot.command("knowledge", (ctx) => {
   );
 });
 
+bot.command("update", async (ctx) => {
+  const botDir = __dirname;
+  const run = (cmd) => execSync(cmd, { cwd: botDir, timeout: 120000 }).toString().trim();
+
+  try {
+    ctx.reply("Checking for updates...");
+
+    // Check if there are new commits
+    run("git fetch origin main");
+    const behind = run("git rev-list HEAD..origin/main --count");
+    if (behind === "0") {
+      return ctx.reply("Already up to date!");
+    }
+
+    ctx.reply(`${behind} new commit(s) found. Updating...`);
+
+    // Stash local changes (e.g. .env, local configs) to protect them
+    const hasLocalChanges = run("git status --porcelain") !== "";
+    if (hasLocalChanges) {
+      run("git stash --include-untracked");
+    }
+
+    // Pull latest code
+    try {
+      run("git pull origin main");
+    } catch (pullErr) {
+      // Restore local changes if pull fails
+      if (hasLocalChanges) run("git stash pop");
+      return ctx.reply(`Update failed during git pull: ${pullErr.message}`);
+    }
+
+    // Restore local changes
+    if (hasLocalChanges) {
+      try {
+        run("git stash pop");
+      } catch {
+        ctx.reply("Warning: local changes conflicted. Your .env is safe — check `git stash list` on the server.");
+      }
+    }
+
+    // Install dependencies in case they changed
+    try {
+      run("npm install --omit=dev");
+    } catch {
+      ctx.reply("Warning: npm install had issues. Bot will still attempt restart.");
+    }
+
+    // Detect PM2 and restart safely
+    let usingPM2 = false;
+    try {
+      const pm2List = run("pm2 jlist");
+      const apps = JSON.parse(pm2List);
+      usingPM2 = apps.some((a) => a.name === "cogent42" && a.pm2_env?.status === "online");
+    } catch {
+      // pm2 not available or not managing this bot
+    }
+
+    if (usingPM2) {
+      await ctx.reply("Update complete. Restarting via PM2...");
+      // Small delay to ensure the message is sent before restart
+      setTimeout(() => {
+        try { execSync("pm2 restart cogent42", { cwd: botDir }); } catch { process.exit(0); }
+      }, 1000);
+    } else {
+      await ctx.reply("Update complete. Restarting...");
+      setTimeout(() => process.exit(0), 1000);
+    }
+  } catch (err) {
+    ctx.reply(`Update failed: ${err.message}`);
+  }
+});
+
 // --- Message Handlers ---
 
 bot.on("text", (ctx) =>
@@ -1291,9 +1380,11 @@ bot.telegram
     { command: "opus", description: "Switch to Opus 4.6" },
     { command: "sonnet", description: "Switch to Sonnet 4.6" },
     { command: "knowledge", description: "View stored knowledge" },
+    { command: "update", description: "Update bot to latest version" },
   ])
   .catch((err) => console.error("Failed to set bot commands:", err.message));
 
+cleanupArchivedSessions();
 startScheduler();
 bot.launch();
 console.log(
