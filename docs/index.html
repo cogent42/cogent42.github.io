@@ -65,6 +65,12 @@
     nav {
       padding: 20px 0;
       border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10, 10, 10, 0.85);
     }
     nav .container {
       display: flex;
@@ -85,35 +91,84 @@
       height: 28px;
       border-radius: 6px;
     }
-    .nav-links { display: flex; gap: 20px; font-size: 0.875rem; }
-    .nav-links a { color: var(--text-muted); }
+    .nav-links { display: flex; gap: 20px; font-size: 0.875rem; align-items: center; }
+    .nav-links a { color: var(--text-muted); transition: color 0.2s; }
     .nav-links a:hover { color: var(--text); text-decoration: none; }
+    .gh-stars {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      transition: border-color 0.2s;
+    }
+    .gh-stars:hover { border-color: var(--accent); color: var(--text); }
+    .gh-stars svg { width: 14px; height: 14px; fill: currentColor; }
 
     /* Hero */
     .hero {
-      padding: 80px 0 60px;
+      padding: 100px 0 70px;
       text-align: center;
     }
     .hero-logo {
-      width: 120px;
-      height: 120px;
-      margin-bottom: 24px;
-      border-radius: 24px;
+      width: 88px;
+      height: 88px;
+      margin-bottom: 32px;
+      border-radius: 20px;
     }
     .hero h1 {
-      font-size: 2.5rem;
+      font-size: 2.75rem;
       font-weight: 700;
-      letter-spacing: -0.03em;
+      letter-spacing: -0.035em;
       line-height: 1.15;
       margin-bottom: 16px;
     }
     .hero h1 span { color: var(--accent); }
-    .hero p {
-      font-size: 1.125rem;
+    .hero p.tagline {
+      font-size: 1.1rem;
       color: var(--text-muted);
-      max-width: 520px;
-      margin: 0 auto 32px;
+      max-width: 500px;
+      margin: 0 auto 40px;
+      line-height: 1.65;
     }
+
+    /* Hero CTA buttons */
+    .hero-cta {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 40px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 22px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+    }
+    .btn:hover { text-decoration: none; }
+    .btn-primary {
+      background: var(--accent);
+      color: #0a0a0a;
+    }
+    .btn-primary:hover { background: #e0b06a; }
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { border-color: #444; }
+    .btn svg { width: 16px; height: 16px; fill: currentColor; }
 
     /* Quick start block */
     .quickstart {
@@ -123,7 +178,7 @@
       padding: 24px 28px;
       text-align: left;
       margin: 0 auto 20px;
-      max-width: 520px;
+      max-width: 620px;
       position: relative;
     }
     .quickstart-label {
@@ -242,6 +297,9 @@
       padding: 40px 0 60px;
       border-top: 1px solid var(--border);
     }
+    .features .container {
+      max-width: 960px;
+    }
     .section-title {
       font-size: 0.75rem;
       font-weight: 600;
@@ -252,7 +310,7 @@
     }
     .feature-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
       gap: 20px;
     }
     .feature {
@@ -392,94 +450,6 @@
       color: var(--text-muted);
     }
 
-    /* Escape OpenClaw migration section */
-    .escape {
-      padding: 40px 0 60px;
-      border-top: 1px solid var(--border);
-    }
-    .escape-intro {
-      font-size: 0.95rem;
-      color: var(--text-muted);
-      line-height: 1.65;
-      max-width: 600px;
-      margin-bottom: 32px;
-    }
-    .escape-intro strong { color: var(--text); }
-    .escape-steps {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-    .escape-step {
-      display: flex;
-      gap: 16px;
-      align-items: flex-start;
-    }
-    .escape-step-num {
-      flex-shrink: 0;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: var(--accent-dim);
-      color: var(--accent);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.8rem;
-      font-weight: 700;
-      margin-top: 2px;
-    }
-    .escape-step-content h3 {
-      font-size: 0.95rem;
-      font-weight: 600;
-      margin-bottom: 6px;
-      color: var(--text);
-    }
-    .escape-step-content p {
-      font-size: 0.825rem;
-      color: var(--text-muted);
-      line-height: 1.5;
-      margin-bottom: 8px;
-    }
-    .escape-step-content p:last-child { margin-bottom: 0; }
-    .escape-code {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 14px 18px;
-      margin-top: 8px;
-    }
-    .escape-code pre {
-      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
-      font-size: 0.825rem;
-      line-height: 1.7;
-      color: var(--text);
-      overflow-x: auto;
-    }
-    .escape-code .comment { color: var(--text-muted); }
-    .escape-code .cmd { color: var(--green); }
-    .escape-quote {
-      background: var(--surface);
-      border-left: 3px solid var(--accent);
-      border-radius: 0 6px 6px 0;
-      padding: 12px 16px;
-      margin-top: 8px;
-      font-size: 0.825rem;
-      color: var(--text-muted);
-      font-style: italic;
-      line-height: 1.5;
-    }
-    .escape-callout {
-      background: var(--accent-dim);
-      border: 1px solid #d4a05640;
-      border-radius: 8px;
-      padding: 16px 20px;
-      margin-top: 32px;
-      font-size: 0.825rem;
-      color: var(--accent);
-      line-height: 1.5;
-    }
-
     /* Warning */
     .warning {
       background: #f8717110;
@@ -513,13 +483,15 @@
 
     /* Responsive */
     @media (max-width: 600px) {
-      .hero { padding: 50px 0 40px; }
+      .hero { padding: 60px 0 40px; }
       .hero h1 { font-size: 1.75rem; }
-      .hero p { font-size: 1rem; }
-      .feature-grid { grid-template-columns: 1fr; }
+      .hero p.tagline { font-size: 1rem; }
+      .hero-cta { flex-direction: column; align-items: center; }
+      .feature-grid { grid-template-columns: 1fr 1fr; }
       .philosophy-grid { grid-template-columns: 1fr; }
       .quickstart { padding: 18px 20px; }
       .quickstart pre { font-size: 0.8rem; }
+      .gh-stars { display: none; }
     }
   </style>
 </head>
@@ -529,8 +501,10 @@
   <div class="container">
     <div class="logo"><img src="logo.png" alt="cogent42" class="nav-logo">cogent42</div>
     <div class="nav-links">
+      <a href="migrate.html">Migrate</a>
       <a href="https://github.com/cogent42/cogent42">GitHub</a>
       <a href="https://github.com/cogent42/cogent42#license">License</a>
+      <a href="https://github.com/cogent42/cogent42" class="gh-stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25z"/></svg> Star</a>
     </div>
   </div>
 </nav>
@@ -539,14 +513,20 @@
   <div class="container">
     <img src="logo.png" alt="cogent42" class="hero-logo">
     <h1>Claude Code on your server,<br><span>from Telegram</span></h1>
-    <p>Full bash, file operations, and search on any machine you own. One file. Zero complexity. Two-minute setup. The anti-platform.</p>
+    <p class="tagline">Full server access from your phone. Bash, files, search, scheduled tasks &mdash; everything Claude Code can do, controlled from a single Telegram chat.</p>
 
-    <div class="quickstart">
-      <div class="quickstart-label">Quick Start</div>
+    <div class="hero-cta">
+      <a href="https://github.com/cogent42/cogent42" class="btn btn-primary"><svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg> View on GitHub</a>
+      <a href="#quickstart" class="btn btn-secondary">Quick Start</a>
+    </div>
+
+    <div class="quickstart" id="quickstart">
+      <div class="quickstart-label">Install in 2 minutes</div>
       <button class="copy-btn" onclick="copySetup()">Copy</button>
-      <pre><span class="cmd">git clone</span> https://github.com/cogent42/cogent42.git
-<span class="cmd">cd</span> cogent42
-<span class="cmd">node</span> setup.js  <span class="comment"># interactive — walks you through everything</span></pre>
+      <pre><span class="cmd">curl</span> -fsSL https://raw.githubusercontent.com/cogent42/cogent42/main/install.sh | bash
+<span class="comment"># or manually:</span>
+<span class="cmd">git clone</span> https://github.com/cogent42/cogent42.git
+<span class="cmd">cd</span> cogent42 && <span class="cmd">node</span> setup.js</pre>
     </div>
 
     <p class="prereqs">
@@ -803,104 +783,22 @@
   </div>
 </section>
 
-<section class="escape">
-  <div class="container">
-    <div class="section-title">Escaping OpenClaw?</div>
-    <p class="escape-intro">
-      430K lines of code. 17K open issues. Config hell. If you're burnt out on the complexity, you're not alone &mdash; and your knowledge doesn't have to stay behind. <strong>Move everything over in under 5 minutes.</strong>
-    </p>
-    <div class="escape-steps">
-
-      <div class="escape-step">
-        <div class="escape-step-num">1</div>
-        <div class="escape-step-content">
-          <h3>Export your OpenClaw memory</h3>
-          <p>Run this in your OpenClaw workspace to dump everything it knows about you:</p>
-          <div class="escape-code">
-            <pre><span class="cmd">cat</span> ~/.openclaw/workspace/SOUL.md 2>/dev/null
-<span class="cmd">cat</span> ~/.openclaw/workspace/memory.json 2>/dev/null
-<span class="cmd">cat</span> ~/.openclaw/workspace/AGENTS.md 2>/dev/null</pre>
-          </div>
-        </div>
-      </div>
-
-      <div class="escape-step">
-        <div class="escape-step-num">2</div>
-        <div class="escape-step-content">
-          <h3>Save your scheduled tasks</h3>
-          <p>List what you had running so you can recreate them:</p>
-          <div class="escape-code">
-            <pre><span class="comment"># In OpenClaw, ask:</span>
-"List all my scheduled tasks with their cron expressions"</pre>
-          </div>
-        </div>
-      </div>
-
-      <div class="escape-step">
-        <div class="escape-step-num">3</div>
-        <div class="escape-step-content">
-          <h3>Install cogent42</h3>
-          <p>Two minutes, one command:</p>
-          <div class="escape-code">
-            <pre><span class="cmd">curl</span> -fsSL https://cogent42.github.io/cogent42/install.sh | bash</pre>
-          </div>
-        </div>
-      </div>
-
-      <div class="escape-step">
-        <div class="escape-step-num">4</div>
-        <div class="escape-step-content">
-          <h3>Seed your knowledge</h3>
-          <p>Paste your exported context into the first message. cogent42 extracts it automatically into persistent memory:</p>
-          <div class="escape-quote">
-            "Here's context from my previous setup: [paste your SOUL.md / memory dump]. Remember all of this."
-          </div>
-        </div>
-      </div>
-
-      <div class="escape-step">
-        <div class="escape-step-num">5</div>
-        <div class="escape-step-content">
-          <h3>Recreate your schedules</h3>
-          <p>No cron syntax. Just tell it in plain English:</p>
-          <div class="escape-quote">
-            "Schedule a daily health check at 9am"<br>
-            "Run my backup script every Sunday at midnight"
-          </div>
-        </div>
-      </div>
-
-      <div class="escape-step">
-        <div class="escape-step-num">6</div>
-        <div class="escape-step-content">
-          <h3>Done</h3>
-          <p>No YAML. No config files. No dashboard. Just works.</p>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="escape-callout">
-      Your knowledge builds automatically from here. The more you use it, the smarter it gets about your specific setup.
-    </div>
-  </div>
-</section>
-
 <footer>
   <div class="container">
-    <p>MIT License &middot; Built by <a href="https://github.com/cogent42">cogent42</a></p>
+    <p>MIT License &middot; Built by <a href="https://github.com/harshvardhansharma">HaVaS</a> with <a href="https://github.com/cogent42">cogent42</a></p>
   </div>
 </footer>
 
 <script>
 function copySetup() {
-  const text = 'git clone https://github.com/cogent42/cogent42.git\ncd cogent42\nnode setup.js';
+  const text = 'curl -fsSL https://raw.githubusercontent.com/cogent42/cogent42/main/install.sh | bash';
   navigator.clipboard.writeText(text).then(() => {
     const btn = document.querySelector('.copy-btn');
     btn.textContent = 'Copied!';
     setTimeout(() => btn.textContent = 'Copy', 2000);
   });
 }
+
 </script>
 
 </body>
