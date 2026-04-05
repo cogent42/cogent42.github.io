@@ -392,6 +392,94 @@
       color: var(--text-muted);
     }
 
+    /* Escape OpenClaw migration section */
+    .escape {
+      padding: 40px 0 60px;
+      border-top: 1px solid var(--border);
+    }
+    .escape-intro {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+      max-width: 600px;
+      margin-bottom: 32px;
+    }
+    .escape-intro strong { color: var(--text); }
+    .escape-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .escape-step {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .escape-step-num {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent-dim);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+    .escape-step-content h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+    .escape-step-content p {
+      font-size: 0.825rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+    .escape-step-content p:last-child { margin-bottom: 0; }
+    .escape-code {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-top: 8px;
+    }
+    .escape-code pre {
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 0.825rem;
+      line-height: 1.7;
+      color: var(--text);
+      overflow-x: auto;
+    }
+    .escape-code .comment { color: var(--text-muted); }
+    .escape-code .cmd { color: var(--green); }
+    .escape-quote {
+      background: var(--surface);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 6px 6px 0;
+      padding: 12px 16px;
+      margin-top: 8px;
+      font-size: 0.825rem;
+      color: var(--text-muted);
+      font-style: italic;
+      line-height: 1.5;
+    }
+    .escape-callout {
+      background: var(--accent-dim);
+      border: 1px solid #d4a05640;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-top: 32px;
+      font-size: 0.825rem;
+      color: var(--accent);
+      line-height: 1.5;
+    }
+
     /* Warning */
     .warning {
       background: #f8717110;
@@ -711,6 +799,89 @@
     <div class="warning">
       <div class="warning-title">Security note</div>
       <p>cogent42 runs with <code>bypassPermissions</code> mode, giving Claude unrestricted access to your server &mdash; bash, filesystem, everything. Only run this on machines you're comfortable giving full access to. The bot is locked to a single Telegram user ID; unauthorized users are silently rejected.</p>
+    </div>
+  </div>
+</section>
+
+<section class="escape">
+  <div class="container">
+    <div class="section-title">Escaping OpenClaw?</div>
+    <p class="escape-intro">
+      430K lines of code. 17K open issues. Config hell. If you're burnt out on the complexity, you're not alone &mdash; and your knowledge doesn't have to stay behind. <strong>Move everything over in under 5 minutes.</strong>
+    </p>
+    <div class="escape-steps">
+
+      <div class="escape-step">
+        <div class="escape-step-num">1</div>
+        <div class="escape-step-content">
+          <h3>Export your OpenClaw memory</h3>
+          <p>Run this in your OpenClaw workspace to dump everything it knows about you:</p>
+          <div class="escape-code">
+            <pre><span class="cmd">cat</span> ~/.openclaw/workspace/SOUL.md 2>/dev/null
+<span class="cmd">cat</span> ~/.openclaw/workspace/memory.json 2>/dev/null
+<span class="cmd">cat</span> ~/.openclaw/workspace/AGENTS.md 2>/dev/null</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="escape-step">
+        <div class="escape-step-num">2</div>
+        <div class="escape-step-content">
+          <h3>Save your scheduled tasks</h3>
+          <p>List what you had running so you can recreate them:</p>
+          <div class="escape-code">
+            <pre><span class="comment"># In OpenClaw, ask:</span>
+"List all my scheduled tasks with their cron expressions"</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="escape-step">
+        <div class="escape-step-num">3</div>
+        <div class="escape-step-content">
+          <h3>Install cogent42</h3>
+          <p>Two minutes, one command:</p>
+          <div class="escape-code">
+            <pre><span class="cmd">curl</span> -fsSL https://cogent42.github.io/cogent42/install.sh | bash</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="escape-step">
+        <div class="escape-step-num">4</div>
+        <div class="escape-step-content">
+          <h3>Seed your knowledge</h3>
+          <p>Paste your exported context into the first message. cogent42 extracts it automatically into persistent memory:</p>
+          <div class="escape-quote">
+            "Here's context from my previous setup: [paste your SOUL.md / memory dump]. Remember all of this."
+          </div>
+        </div>
+      </div>
+
+      <div class="escape-step">
+        <div class="escape-step-num">5</div>
+        <div class="escape-step-content">
+          <h3>Recreate your schedules</h3>
+          <p>No cron syntax. Just tell it in plain English:</p>
+          <div class="escape-quote">
+            "Schedule a daily health check at 9am"<br>
+            "Run my backup script every Sunday at midnight"
+          </div>
+        </div>
+      </div>
+
+      <div class="escape-step">
+        <div class="escape-step-num">6</div>
+        <div class="escape-step-content">
+          <h3>Done</h3>
+          <p>No YAML. No config files. No dashboard. Just works.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="escape-callout">
+      Your knowledge builds automatically from here. The more you use it, the smarter it gets about your specific setup.
     </div>
   </div>
 </section>
