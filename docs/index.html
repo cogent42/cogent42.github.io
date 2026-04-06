@@ -801,24 +801,49 @@
       .hero-stats { gap: 32px; }
       .hero-stat .number { font-size: 2.2rem; }
       .feature-grid { grid-template-columns: 1fr 1fr; }
+      .features .container { max-width: 720px; }
       .left-out-grid { grid-template-columns: 1fr 1fr; }
       .env-grid { grid-template-columns: 1fr; }
+      .robustness-quote { max-width: 100%; }
       section { padding: 60px 0; }
       .section-headline { font-size: 1.6rem; }
     }
     @media (max-width: 500px) {
+      .container { padding: 0 18px; }
+      .hero { padding: 60px 0 40px; }
       .hero h1 { font-size: 1.75rem; }
-      .hero-stats { gap: 24px; flex-wrap: wrap; }
+      .hero p.tagline { font-size: 0.95rem; margin-bottom: 32px; }
+      .hero-stats { gap: 20px; flex-wrap: wrap; justify-content: center; }
       .hero-stat .number { font-size: 1.8rem; }
+      .hero-stat .label { font-size: 0.6rem; }
+      .section-headline { font-size: 1.35rem; }
+      .section-desc { font-size: 0.88rem; }
       .philosophy-grid { grid-template-columns: 1fr; }
       .left-out-grid { grid-template-columns: 1fr; }
       .feature-grid { grid-template-columns: 1fr; }
       .complexity-row { grid-template-columns: 1fr; gap: 8px; padding: 16px 20px; }
       .complexity-label { margin-bottom: 2px; }
+      .complexity-good { font-size: 1.15rem; }
       .quickstart { margin: 0 auto 20px; }
       .terminal-body { padding: 16px 18px; }
       .terminal-body pre { font-size: 0.75rem; }
+      .nav-links a:not(.gh-stars) { font-size: 0.78rem; }
+      .nav-links { gap: 14px; }
       .gh-stars { display: none; }
+      .cmd-table td:first-child { width: 110px; font-size: 0.75rem; }
+      .cmd-table td:last-child { font-size: 0.78rem; }
+      .step { gap: 14px; }
+      .step-num { width: 30px; height: 30px; font-size: 0.78rem; }
+      section { padding: 48px 0; }
+      .hero::before { width: 250px; height: 250px; }
+      .hero::after { width: 200px; height: 200px; }
+    }
+    @media (max-width: 360px) {
+      .hero h1 { font-size: 1.5rem; }
+      .hero-stats { gap: 16px; }
+      .hero-stat .number { font-size: 1.5rem; }
+      .cmd-table td:first-child { width: 95px; }
+      .complexity-row { padding: 14px 16px; }
     }
   </style>
 </head>
