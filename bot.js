@@ -365,6 +365,12 @@ Keep as many entries as needed — just remove genuine redundancy and staleness.
 function buildSystemPrompt() {
   const parts = [];
 
+  // Critical safety rule — never self-modify
+  parts.push(
+    `CRITICAL: NEVER modify bot.js, package.json, ecosystem.config.cjs, setup.js, or .env in the cogent42 directory (${__dirname}). ` +
+    `These files keep you running — editing them will crash you. If asked to change bot behavior, explain what the change would look like and suggest the user applies it manually or via /update.`
+  );
+
   if (BOT_PERSONALITY) {
     parts.push(`Your personality: ${BOT_PERSONALITY}`);
   }
