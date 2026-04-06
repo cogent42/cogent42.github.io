@@ -6,7 +6,11 @@
 
 <p align="center"><strong>Full Claude Code access on your server, controlled from Telegram.</strong></p>
 
-cogent42 is a single-user Telegram bot that gives you complete Claude Code capabilities -- bash execution, file operations, search, and more -- on any server you run it on. Set it up on your VPS, message it from Telegram, and operate your server through Claude.
+<p align="center"><em>1 file &nbsp;|&nbsp; 3 dependencies &nbsp;|&nbsp; 2-minute setup &nbsp;|&nbsp; The anti-platform.</em></p>
+
+---
+
+cogent42 is a single-file Telegram bot that gives you complete Claude Code capabilities on any server -- bash, files, search, scheduled tasks, persistent memory -- all from your phone. No plugins, no YAML, no Docker. Clone it, run the setup, message your bot.
 
 ## Features
 
