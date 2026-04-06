@@ -809,12 +809,38 @@ async function runWithLock(ctx, fn, promptText) {
   }
 }
 
+const FOLLOWUP_PATTERNS = /^(also|and |oh wait|actually|btw|plus |don't forget|dont forget|wait |one more|oh and|fyi|note:|heads up|correction|change that|instead |use |not |no,|no |switch to|make sure)/i;
+
+function looksLikeFollowup(text) {
+  if (!text) return false;
+  if (text.length > 120) return false;
+  if (text.startsWith("/")) return false; // commands are never followups
+  if (FOLLOWUP_PATTERNS.test(text.trim())) return true;
+  if (text.length < 40) return true; // very short messages are almost always context
+  return false;
+}
+
 async function withProcessingLock(ctx, fn, promptText) {
   if (!processing) {
     return runWithLock(ctx, fn, promptText);
   }
 
-  // Bot is busy — offer inject or queue
+  // Bot is busy — check if this looks like a quick follow-up
+  if (looksLikeFollowup(promptText)) {
+    // Auto-inject: react with ⚡ and inject silently
+    try {
+      await ctx.telegram.setMessageReaction(
+        ctx.chat.id,
+        ctx.message.message_id,
+        [{ type: "emoji", emoji: "⚡" }]
+      );
+    } catch {}
+    pendingInject = { ctx, text: promptText };
+    currentAbortController?.abort();
+    return;
+  }
+
+  // Longer message — offer inject or queue buttons
   const id = queueMessage(ctx, promptText, fn);
   const pos = messageQueue.length;
   const preview = (promptText || "").slice(0, 50);
