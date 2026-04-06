@@ -3,10 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Migrate from OpenClaw - cogent42</title>
-  <meta name="description" content="Move from OpenClaw to cogent42 in under 5 minutes. Export your memory, install cogent42, and keep everything.">
+  <title>Migrate from OpenClaw to cogent42 - Switch in 5 Minutes</title>
+  <meta name="description" content="Move from OpenClaw to cogent42 in under 5 minutes. Export your memory, run one command, keep everything. No more YAML configs, plugin conflicts, or 17K open issues.">
+  <meta name="keywords" content="OpenClaw migration, switch from OpenClaw, OpenClaw alternative, leave OpenClaw, OpenClaw to cogent42, OpenClaw replacement, simpler than OpenClaw, OpenClaw too complex">
+  <meta property="og:title" content="Migrate from OpenClaw to cogent42 in 5 Minutes">
+  <meta property="og:description" content="Export your memory, run one command, keep everything. No more YAML configs or plugin conflicts.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://cogent42.github.io/cogent42/migrate.html">
+  <meta property="og:image" content="https://cogent42.github.io/cogent42/logo.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Migrate from OpenClaw to cogent42 in 5 Minutes">
+  <meta name="twitter:description" content="Export your memory, run one command, keep everything. No more YAML configs or plugin conflicts.">
   <meta name="theme-color" content="#0f0f0f">
   <link rel="icon" type="image/png" href="logo.png">
+  <link rel="canonical" href="https://cogent42.github.io/cogent42/migrate.html">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to migrate from OpenClaw to cogent42",
+    "description": "Move from OpenClaw to cogent42 in under 5 minutes. Export your memory, install cogent42, and keep everything.",
+    "totalTime": "PT5M",
+    "step": [
+      { "@type": "HowToStep", "name": "Export OpenClaw memory", "text": "Run cat commands to export your SOUL.md, memory.json, and AGENTS.md files from OpenClaw" },
+      { "@type": "HowToStep", "name": "Save scheduled tasks", "text": "List all your OpenClaw scheduled tasks with their cron expressions" },
+      { "@type": "HowToStep", "name": "Install cogent42", "text": "Run git clone and node setup.js to install cogent42 in 2 minutes" },
+      { "@type": "HowToStep", "name": "Seed knowledge", "text": "Paste your exported context into the first message to transfer memory" },
+      { "@type": "HowToStep", "name": "Recreate schedules", "text": "Set up schedules in plain English, no cron syntax needed" }
+    ]
+  }
+  </script>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7N87D946QZ"></script>
   <script>
@@ -17,20 +43,24 @@
   </script>
   <style>
     :root {
-      --bg: #0a0a0a;
-      --surface: #141414;
-      --border: #222;
-      --text: #e0e0e0;
-      --text-muted: #888;
+      --bg: #050505;
+      --surface: #0c0c0c;
+      --surface-hover: #111;
+      --border: #1a1a1a;
+      --border-hover: #2a2a2a;
+      --text: #e8e8e8;
+      --text-muted: #666;
       --accent: #d4a056;
-      --accent-dim: #d4a05620;
-      --code-bg: #111;
+      --accent-glow: #d4a05640;
+      --accent-dim: #d4a05615;
+      --code-bg: #0a0a0a;
       --green: #4ade80;
       --blue: #60a5fa;
       --red: #f87171;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
@@ -38,10 +68,21 @@
       color: var(--text);
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
 
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { text-decoration: underline; }
+    /* Noise overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    a { color: var(--accent); text-decoration: none; transition: color 0.3s; }
+    a:hover { color: #e8c98a; text-decoration: none; }
 
     .container {
       max-width: 720px;
@@ -49,24 +90,33 @@
       padding: 0 24px;
     }
 
+    /* Scroll reveal */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    .gradient-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-hover) 20%, var(--accent-glow) 50%, var(--border-hover) 80%, transparent);
+    }
+
     /* Nav */
     nav {
-      padding: 20px 0;
-      border-bottom: 1px solid var(--border);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      padding: 18px 0;
+      backdrop-filter: blur(20px) saturate(1.5);
+      -webkit-backdrop-filter: blur(20px) saturate(1.5);
       position: sticky;
       top: 0;
       z-index: 100;
-      background: rgba(10, 10, 10, 0.85);
+      background: rgba(5, 5, 5, 0.8);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
     }
-    nav .container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+    nav .container { display: flex; justify-content: space-between; align-items: center; }
     .logo {
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       font-weight: 700;
       color: var(--text);
       letter-spacing: -0.02em;
@@ -75,133 +125,266 @@
       gap: 8px;
     }
     .logo:hover { text-decoration: none; }
-    .nav-logo {
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
-    }
-    .nav-links { display: flex; gap: 20px; font-size: 0.875rem; align-items: center; }
-    .nav-links a { color: var(--text-muted); }
-    .nav-links a:hover { color: var(--text); text-decoration: none; }
+    .nav-logo { width: 26px; height: 26px; border-radius: 6px; }
+    .nav-links { display: flex; gap: 20px; font-size: 0.85rem; align-items: center; }
+    .nav-links a { color: var(--text-muted); transition: color 0.3s; }
+    .nav-links a:hover { color: var(--text); }
 
     /* Page header */
     .page-header {
-      padding: 60px 0 40px;
+      padding: 100px 0 60px;
+      position: relative;
+      text-align: center;
     }
+    .page-header::before {
+      content: '';
+      position: absolute;
+      width: 350px; height: 350px;
+      background: var(--red);
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.08;
+      top: -100px; right: -50px;
+      animation: float 20s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(-30px, 20px) scale(1.05); }
+    }
+    .page-header .container { position: relative; z-index: 1; }
     .section-title {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-muted);
+      letter-spacing: 0.12em;
+      color: var(--accent);
       margin-bottom: 16px;
     }
     .page-header h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      margin-bottom: 16px;
+      font-size: 2.75rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      margin-bottom: 20px;
+      animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .page-header h1 .gradient-text {
+      background: linear-gradient(135deg, var(--red), #fca5a5, var(--red));
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradientShift 8s ease-in-out infinite;
+    }
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Escape section */
-    .escape-intro {
-      font-size: 0.95rem;
+    /* Pain points */
+    .pain-stats {
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      margin: 36px 0;
+      animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+    }
+    .pain-stat { text-align: center; }
+    .pain-stat .number {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--red);
+      opacity: 0.8;
+      line-height: 1;
+    }
+    .pain-stat .label {
+      font-size: 0.65rem;
       color: var(--text-muted);
-      line-height: 1.65;
-      max-width: 600px;
-      margin-bottom: 40px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 6px;
+    }
+
+    .escape-intro {
+      font-size: 1rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      max-width: 520px;
+      margin: 0 auto;
+      animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
     }
     .escape-intro strong { color: var(--text); }
+
+    /* Steps */
     .escape-steps {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 0;
+      margin-top: 40px;
     }
     .escape-step {
       display: flex;
-      gap: 16px;
+      gap: 20px;
       align-items: flex-start;
+      padding: 28px 0;
+      border-bottom: 1px solid var(--border);
     }
+    .escape-step:last-child { border-bottom: none; }
     .escape-step-num {
       flex-shrink: 0;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
+      width: 36px; height: 36px;
+      border-radius: 10px;
       background: var(--accent-dim);
       color: var(--accent);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       font-weight: 700;
-      margin-top: 2px;
+      border: 1px solid var(--accent-glow);
     }
     .escape-step-content h3 {
-      font-size: 0.95rem;
+      font-size: 1rem;
       font-weight: 600;
       margin-bottom: 6px;
-      color: var(--text);
     }
     .escape-step-content p {
-      font-size: 0.825rem;
+      font-size: 0.85rem;
       color: var(--text-muted);
-      line-height: 1.5;
-      margin-bottom: 8px;
+      line-height: 1.6;
+      margin-bottom: 10px;
     }
     .escape-step-content p:last-child { margin-bottom: 0; }
+
     .escape-code {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 14px 18px;
-      margin-top: 8px;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-top: 10px;
+      transition: border-color 0.3s;
     }
+    .escape-code:hover { border-color: var(--border-hover); }
     .escape-code pre {
       font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
-      font-size: 0.825rem;
-      line-height: 1.7;
+      font-size: 0.8rem;
+      line-height: 1.8;
       color: var(--text);
       overflow-x: auto;
     }
     .escape-code .comment { color: var(--text-muted); }
     .escape-code .cmd { color: var(--green); }
+
     .escape-quote {
       background: var(--surface);
-      border-left: 3px solid var(--accent);
-      border-radius: 0 6px 6px 0;
-      padding: 12px 16px;
-      margin-top: 8px;
-      font-size: 0.825rem;
+      border-left: 2px solid var(--accent);
+      border-radius: 0 10px 10px 0;
+      padding: 14px 18px;
+      margin-top: 10px;
+      font-size: 0.85rem;
       color: var(--text-muted);
       font-style: italic;
-      line-height: 1.5;
+      line-height: 1.6;
     }
+
+    /* Done step */
+    .done-step .escape-step-num {
+      background: #4ade8015;
+      color: var(--green);
+      border-color: #4ade8030;
+    }
+
+    /* CTA callout */
     .escape-callout {
-      background: var(--accent-dim);
-      border: 1px solid #d4a05640;
-      border-radius: 8px;
-      padding: 16px 20px;
-      margin-top: 40px;
-      font-size: 0.825rem;
+      background: linear-gradient(135deg, var(--accent-dim), var(--accent-glow));
+      border: 1px solid #d4a05630;
+      border-radius: 12px;
+      padding: 24px 28px;
+      margin-top: 48px;
+      text-align: center;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .escape-callout:hover {
+      border-color: var(--accent);
+      box-shadow: 0 8px 40px var(--accent-dim);
+    }
+    .escape-callout p {
+      font-size: 0.9rem;
       color: var(--accent);
+      line-height: 1.6;
+    }
+    .escape-callout strong { color: var(--text); }
+
+    /* Before/after comparison */
+    .before-after {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 48px;
+    }
+    .before-after-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      transition: all 0.3s;
+    }
+    .before-after-card:hover { border-color: var(--border-hover); }
+    .before-after-card h3 {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 16px;
+    }
+    .before-after-card.before h3 { color: var(--red); }
+    .before-after-card.after h3 { color: var(--green); }
+    .before-after-card ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .before-after-card li {
+      font-size: 0.82rem;
+      color: var(--text-muted);
       line-height: 1.5;
+      padding-left: 20px;
+      position: relative;
+    }
+    .before-after-card.before li::before {
+      content: '\2717';
+      position: absolute;
+      left: 0;
+      color: var(--red);
+      opacity: 0.6;
+    }
+    .before-after-card.after li::before {
+      content: '\2713';
+      position: absolute;
+      left: 0;
+      color: var(--green);
     }
 
     /* Footer */
     footer {
-      padding: 30px 0;
-      border-top: 1px solid var(--border);
+      padding: 40px 0;
       text-align: center;
-      margin-top: 60px;
+      margin-top: 20px;
     }
-    footer p {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
+    footer p { font-size: 0.78rem; color: var(--text-muted); }
 
     @media (max-width: 600px) {
-      .page-header { padding: 40px 0 30px; }
-      .page-header h1 { font-size: 1.5rem; }
+      .page-header { padding: 60px 0 40px; }
+      .page-header h1 { font-size: 1.75rem; }
+      .pain-stats { gap: 28px; }
+      .pain-stat .number { font-size: 1.5rem; }
+      .before-after { grid-template-columns: 1fr; }
+      .escape-intro { font-size: 0.9rem; }
     }
   </style>
 </head>
@@ -220,14 +403,32 @@
 <section class="page-header">
   <div class="container">
     <div class="section-title">Migration guide</div>
-    <h1>Escaping OpenClaw?</h1>
+    <h1>Escaping <span class="gradient-text">OpenClaw</span>?</h1>
+
+    <div class="pain-stats">
+      <div class="pain-stat">
+        <div class="number">430K</div>
+        <div class="label">Lines of code</div>
+      </div>
+      <div class="pain-stat">
+        <div class="number">17K+</div>
+        <div class="label">Open issues</div>
+      </div>
+      <div class="pain-stat">
+        <div class="number">30m</div>
+        <div class="label">Setup time</div>
+      </div>
+    </div>
+
     <p class="escape-intro">
-      430K lines of code. 17K open issues. Config hell. If you're burnt out on the complexity, you're not alone &mdash; and your knowledge doesn't have to stay behind. <strong>Move everything over in under 5 minutes.</strong>
+      If you're burnt out on the complexity, you're not alone. Your knowledge doesn't have to stay behind. <strong>Move everything over in under 5 minutes.</strong>
     </p>
   </div>
 </section>
 
-<section>
+<div class="gradient-divider"></div>
+
+<section class="reveal" style="padding: 60px 0;">
   <div class="container">
     <div class="escape-steps">
 
@@ -235,7 +436,7 @@
         <div class="escape-step-num">1</div>
         <div class="escape-step-content">
           <h3>Export your OpenClaw memory</h3>
-          <p>Run this in your OpenClaw workspace to dump everything it knows about you:</p>
+          <p>Dump everything OpenClaw knows about you:</p>
           <div class="escape-code">
             <pre><span class="cmd">cat</span> ~/.openclaw/workspace/SOUL.md 2>/dev/null
 <span class="cmd">cat</span> ~/.openclaw/workspace/memory.json 2>/dev/null
@@ -260,9 +461,10 @@
         <div class="escape-step-num">3</div>
         <div class="escape-step-content">
           <h3>Install cogent42</h3>
-          <p>Two minutes, one command:</p>
+          <p>Two commands, two minutes:</p>
           <div class="escape-code">
-            <pre><span class="cmd">curl</span> -fsSL https://raw.githubusercontent.com/cogent42/cogent42/main/install.sh | bash</pre>
+            <pre><span class="cmd">git clone</span> https://github.com/cogent42/cogent42.git
+<span class="cmd">cd</span> cogent42 && <span class="cmd">node</span> setup.js</pre>
           </div>
         </div>
       </div>
@@ -271,7 +473,7 @@
         <div class="escape-step-num">4</div>
         <div class="escape-step-content">
           <h3>Seed your knowledge</h3>
-          <p>Paste your exported context into the first message. cogent42 extracts it automatically into persistent memory:</p>
+          <p>Paste your exported context into the first message. cogent42 extracts it automatically:</p>
           <div class="escape-quote">
             "Here's context from my previous setup: [paste your SOUL.md / memory dump]. Remember all of this."
           </div>
@@ -282,7 +484,7 @@
         <div class="escape-step-num">5</div>
         <div class="escape-step-content">
           <h3>Recreate your schedules</h3>
-          <p>No cron syntax. Just tell it in plain English:</p>
+          <p>No cron syntax. Just plain English:</p>
           <div class="escape-quote">
             "Schedule a daily health check at 9am"<br>
             "Run my backup script every Sunday at midnight"
@@ -290,27 +492,78 @@
         </div>
       </div>
 
-      <div class="escape-step">
+      <div class="escape-step done-step">
         <div class="escape-step-num">6</div>
         <div class="escape-step-content">
-          <h3>Done</h3>
-          <p>No YAML. No config files. No dashboard. Just works.</p>
+          <h3>Done.</h3>
+          <p>No YAML. No config files. No dashboard. It just works.</p>
         </div>
       </div>
 
     </div>
 
     <div class="escape-callout">
-      Your knowledge builds automatically from here. The more you use it, the smarter it gets about your specific setup.
+      <p>Your knowledge builds automatically from here. The more you use it, the smarter it gets about your setup.</p>
     </div>
   </div>
 </section>
+
+<div class="gradient-divider"></div>
+
+<section class="reveal" style="padding: 60px 0;">
+  <div class="container">
+    <h2 style="font-size: 1.5rem; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 8px;">Before &amp; after.</h2>
+    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0;">What changes when you switch.</p>
+    <div class="before-after">
+      <div class="before-after-card before">
+        <h3>OpenClaw</h3>
+        <ul>
+          <li>Large monorepo you can't audit</li>
+          <li>Dozens of dependencies to manage</li>
+          <li>YAML + JSON config files</li>
+          <li>Plugin version conflicts</li>
+          <li>30-minute setup with Docker</li>
+          <li>17,000+ open issues</li>
+          <li>Web UI you barely use</li>
+          <li>Cron syntax for schedules</li>
+        </ul>
+      </div>
+      <div class="before-after-card after">
+        <h3>cogent42</h3>
+        <ul>
+          <li>1 file, ~1,400 lines. Read it all.</li>
+          <li>3 npm packages. That's it.</li>
+          <li>5 environment variables</li>
+          <li>No plugins = no conflicts</li>
+          <li>2-minute setup, no Docker</li>
+          <li>Fewer than 10 issues</li>
+          <li>Telegram is your interface</li>
+          <li>Plain English schedules</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="gradient-divider"></div>
 
 <footer>
   <div class="container">
     <p>MIT License &middot; Built by <a href="https://github.com/harshvardhansharma">HaVaS</a> with <a href="https://github.com/cogent42">cogent42</a></p>
   </div>
 </footer>
+
+<script>
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
 
 </body>
 </html>
