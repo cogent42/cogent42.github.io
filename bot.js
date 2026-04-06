@@ -1008,28 +1008,50 @@ bot.action(/^inject_(.+)$/, async (ctx) => {
 
   const item = messageQueue.splice(idx, 1)[0];
 
+  // React to the original message with ⚡ so user knows it was injected
+  try {
+    await ctx.telegram.setMessageReaction(
+      item.ctx.chat.id,
+      item.ctx.message.message_id,
+      [{ type: "emoji", emoji: "⚡" }]
+    );
+  } catch {}
+
+  // Delete the inject/queue prompt message — keep chat clean
+  try {
+    await ctx.deleteMessage();
+  } catch {}
+
   if (!processing) {
-    // Nothing running — just run it immediately
-    await ctx.editMessageText("▶️ Running now…");
     runWithLock(item.ctx, item.fn, item.promptText);
     return;
   }
 
   // Set as pending inject and abort current task
   pendingInject = { ctx: item.ctx, text: item.promptText };
-  await ctx.editMessageText("⚡ Injecting — restarting current task with your new context…");
   currentAbortController?.abort();
 });
 
 bot.action(/^keep_(.+)$/, async (ctx) => {
   await ctx.answerCbQuery("Queued");
   const id = ctx.match[1];
-  const pos = messageQueue.findIndex((q) => q.id === id) + 1;
-  if (pos > 0) {
-    await ctx.editMessageText(`📥 Queued at position #${pos} — I'll get to it after the current task.`);
-  } else {
-    await ctx.editMessageText("📥 Queued — I'll get to it next.");
+  const item = messageQueue.find((q) => q.id === id);
+
+  // React to the original message with 📥 so user knows it's queued
+  if (item) {
+    try {
+      await ctx.telegram.setMessageReaction(
+        item.ctx.chat.id,
+        item.ctx.message.message_id,
+        [{ type: "emoji", emoji: "📥" }]
+      );
+    } catch {}
   }
+
+  // Delete the inject/queue prompt message — keep chat clean
+  try {
+    await ctx.deleteMessage();
+  } catch {}
 });
 
 // --- Commands ---
