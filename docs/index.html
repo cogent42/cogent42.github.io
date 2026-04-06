@@ -254,29 +254,7 @@
       padding: 40px 0 60px;
       border-top: 1px solid var(--border);
     }
-    .comparison-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
-      margin-top: 20px;
-    }
-    .comparison-table th {
-      text-align: left;
-      padding: 10px 12px;
-      border-bottom: 2px solid var(--border);
-      color: var(--text-muted);
-      font-weight: 600;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .comparison-table td {
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--border);
-    }
-    .comparison-table td:first-child { color: var(--text-muted); }
-    .comparison-table .yes { color: var(--green); }
-    .comparison-table .no { color: var(--text-muted); }
+    /* comparison table styles removed - replaced by complexity grid */
 
     /* Features */
     .features {
@@ -467,14 +445,135 @@
       color: var(--text-muted);
     }
 
+    /* Hero stats */
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      margin: 32px 0 40px;
+    }
+    .hero-stat {
+      text-align: center;
+    }
+    .hero-stat .number {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+    .hero-stat .label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-top: 4px;
+    }
+
+    /* Complexity grid (comparison) */
+    .complexity-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      font-style: italic;
+    }
+    .complexity-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .complexity-row {
+      display: grid;
+      grid-template-columns: 140px 1fr 1fr;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+    }
+    .complexity-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+    .complexity-good {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--green);
+    }
+    .complexity-bad {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    /* Left out section */
+    .left-out-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 24px;
+    }
+    .left-out-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 22px;
+    }
+    .left-out-card h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+    .left-out-card h3 s {
+      color: var(--red);
+      text-decoration: line-through;
+      text-decoration-color: var(--red);
+    }
+    .left-out-card p {
+      font-size: 0.825rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Robustness pull-quote */
+    .robustness {
+      padding: 40px 0 60px;
+      border-top: 1px solid var(--border);
+    }
+    .robustness-quote {
+      border-left: 3px solid var(--accent);
+      padding-left: 24px;
+      margin-top: 20px;
+    }
+    .robustness-quote p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+      margin-bottom: 16px;
+    }
+    .robustness-quote p:last-child {
+      margin-bottom: 0;
+    }
+    .robustness-quote strong {
+      color: var(--text);
+    }
+
     /* Responsive */
     @media (max-width: 600px) {
       .hero { padding: 60px 0 40px; }
       .hero h1 { font-size: 1.75rem; }
       .hero p.tagline { font-size: 1rem; }
       .hero-cta { flex-direction: column; align-items: center; }
+      .hero-stats { gap: 28px; }
+      .hero-stat .number { font-size: 1.75rem; }
       .feature-grid { grid-template-columns: 1fr 1fr; }
       .philosophy-grid { grid-template-columns: 1fr; }
+      .left-out-grid { grid-template-columns: 1fr; }
+      .complexity-row { grid-template-columns: 1fr; gap: 6px; padding: 14px 18px; }
+      .complexity-good { font-size: 1.15rem; }
       .quickstart { padding: 18px 20px; }
       .quickstart pre { font-size: 0.8rem; }
       .gh-stars { display: none; }
@@ -501,6 +600,21 @@
     <h1>Claude Code on your server,<br><span>from Telegram</span></h1>
     <p class="tagline">Full server access from your phone. Bash, files, search, scheduled tasks &mdash; everything Claude Code can do, controlled from a single Telegram chat.</p>
 
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="number">1</div>
+        <div class="label">File &mdash; the entire bot</div>
+      </div>
+      <div class="hero-stat">
+        <div class="number">3</div>
+        <div class="label">Dependencies &mdash; total</div>
+      </div>
+      <div class="hero-stat">
+        <div class="number">2m</div>
+        <div class="label">Setup to first message</div>
+      </div>
+    </div>
+
     <div class="hero-cta">
       <a href="https://github.com/cogent42/cogent42" class="btn btn-primary"><svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg> View on GitHub</a>
       <a href="#quickstart" class="btn btn-secondary">Quick Start</a>
@@ -522,26 +636,26 @@
   <div class="container">
     <div class="section-title">Why cogent42</div>
     <p class="philosophy-intro">
-      Tools like <strong>OpenClaw</strong> are impressive &mdash; multi-channel, multi-model, skills marketplace, browser control, 247k GitHub stars. But they're also <strong>platforms</strong>. Dozens of config files, plugin systems, channel adapters, a web UI.
+      <strong>OpenClaw</strong> has 247k GitHub stars and <strong>17,000+ open issues</strong>. It supports 20+ channels, dozens of models, a plugin marketplace, and YAML configs you'll spend an afternoon debugging. It's a platform.
       <br><br>
-      cogent42 is the opposite. <strong>One file. One user. One server. One chat.</strong> It does one thing &mdash; gives you Claude Code from Telegram &mdash; and does it well.
+      cogent42 is a tool. <strong>One file. One user. One server. One chat.</strong> It does exactly one thing &mdash; puts Claude Code in your Telegram &mdash; and does it without breaking.
     </p>
     <div class="philosophy-grid">
       <div class="philosophy-card">
         <h3>Single file, not a framework</h3>
-        <p>The entire bot is one file (bot.js). No plugin system, no adapters, no abstractions. Read it in 10 minutes, modify it in 5.</p>
+        <p>The entire bot is one file. No plugin system, no adapters, no abstractions. Audit every line in one sitting. Modify anything without side effects.</p>
       </div>
       <div class="philosophy-card">
-        <h3>Zero extra dependencies</h3>
-        <p>Three npm packages: telegraf, claude-agent-sdk, dotenv. No database, no Redis, no Docker required. npm install and go.</p>
+        <h3>Three deps, not thirty</h3>
+        <p>telegraf, claude-agent-sdk, dotenv. That's it. No database, no Redis, no Docker. Fewer dependencies means fewer things that break on update.</p>
       </div>
       <div class="philosophy-card">
         <h3>Your server, not a service</h3>
         <p>Runs on your machine. Uses your Claude Code subscription. No middleman, no API keys to manage, no per-token billing.</p>
       </div>
       <div class="philosophy-card">
-        <h3>Smart, not complex</h3>
-        <p>Auto-escalation, knowledge extraction, scheduled tasks, progress streaming &mdash; powerful features that stay simple under the hood.</p>
+        <h3>Powerful features, zero config</h3>
+        <p>Auto-escalation, knowledge extraction, scheduled tasks, progress streaming &mdash; they all just work. Five env vars and you're done.</p>
       </div>
     </div>
   </div>
@@ -550,68 +664,87 @@
 <section class="comparison">
   <div class="container">
     <div class="section-title">cogent42 vs OpenClaw</div>
-    <table class="comparison-table">
-      <tr>
-        <th>Feature</th>
-        <th>cogent42</th>
-        <th>OpenClaw</th>
-      </tr>
-      <tr>
-        <td>Setup time</td>
-        <td class="yes">2 minutes</td>
-        <td>15-30 minutes</td>
-      </tr>
-      <tr>
-        <td>Codebase</td>
-        <td class="yes">1 file (~1000 lines)</td>
-        <td>Large monorepo</td>
-      </tr>
-      <tr>
-        <td>Dependencies</td>
-        <td class="yes">3 npm packages</td>
-        <td>Dozens</td>
-      </tr>
-      <tr>
-        <td>Full Claude Code access</td>
-        <td class="yes">Yes</td>
-        <td class="yes">Yes</td>
-      </tr>
-      <tr>
-        <td>Persistent memory</td>
-        <td class="yes">Yes</td>
-        <td class="yes">Yes</td>
-      </tr>
-      <tr>
-        <td>Scheduled tasks</td>
-        <td class="yes">Yes (plain English)</td>
-        <td class="yes">Yes (cron syntax)</td>
-      </tr>
-      <tr>
-        <td>Live progress</td>
-        <td class="yes">Yes</td>
-        <td class="yes">Yes</td>
-      </tr>
-      <tr>
-        <td>Multi-channel</td>
-        <td class="no">Telegram only</td>
-        <td class="yes">20+ channels</td>
-      </tr>
-      <tr>
-        <td>Multi-model</td>
-        <td class="no">Claude only</td>
-        <td class="yes">Any LLM</td>
-      </tr>
-      <tr>
-        <td>Plugin system</td>
-        <td class="no">No (by design)</td>
-        <td class="yes">Yes</td>
-      </tr>
-      <tr>
-        <td>Config complexity</td>
-        <td class="yes">5 env vars</td>
-        <td>YAML + JSON configs</td>
-      </tr>
-    </table>
+    <p class="complexity-subtitle">Complexity is the enemy of reliability.</p>
+    <div class="complexity-grid">
+      <div class="complexity-row">
+        <span class="complexity-label">Codebase</span>
+        <span class="complexity-good">1 file</span>
+        <span class="complexity-bad">Large monorepo</span>
+      </div>
+      <div class="complexity-row">
+        <span class="complexity-label">Lines of code</span>
+        <span class="complexity-good">~1,400</span>
+        <span class="complexity-bad">100,000+</span>
+      </div>
+      <div class="complexity-row">
+        <span class="complexity-label">Dependencies</span>
+        <span class="complexity-good">3</span>
+        <span class="complexity-bad">Dozens</span>
+      </div>
+      <div class="complexity-row">
+        <span class="complexity-label">Config</span>
+        <span class="complexity-good">5 env vars</span>
+        <span class="complexity-bad">YAML + JSON</span>
+      </div>
+      <div class="complexity-row">
+        <span class="complexity-label">Setup time</span>
+        <span class="complexity-good">2 minutes</span>
+        <span class="complexity-bad">15&ndash;30 minutes</span>
+      </div>
+      <div class="complexity-row">
+        <span class="complexity-label">Setup command</span>
+        <span class="complexity-good">node setup.js</span>
+        <span class="complexity-bad">Multi-step install</span>
+      </div>
+      <div class="complexity-row">
+        <span class="complexity-label">Open issues</span>
+        <span class="complexity-good">&lt; 10</span>
+        <span class="complexity-bad">17,000+</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="philosophy" style="border-top: 1px solid var(--border);">
+  <div class="container">
+    <div class="section-title">What we left out (on purpose)</div>
+    <div class="left-out-grid">
+      <div class="left-out-card">
+        <h3><s>Plugin system</s></h3>
+        <p>Plugins mean version conflicts, breaking updates, and security surface area. cogent42 is one file you control completely.</p>
+      </div>
+      <div class="left-out-card">
+        <h3><s>Web UI</s></h3>
+        <p>Your Telegram app IS the UI. Already on your phone, already encrypted, already has push notifications.</p>
+      </div>
+      <div class="left-out-card">
+        <h3><s>Multi-model support</s></h3>
+        <p>Claude Code is the best coding agent available. Why add a router to pick between worse options?</p>
+      </div>
+      <div class="left-out-card">
+        <h3><s>Multi-channel</s></h3>
+        <p>One channel means one thing to debug. Your Telegram chat is a direct, private line to your server.</p>
+      </div>
+      <div class="left-out-card">
+        <h3><s>Database</s></h3>
+        <p>State lives in flat JSON files. No migrations, no schemas, no ORM. <code>cat</code> is your database viewer.</p>
+      </div>
+      <div class="left-out-card">
+        <h3><s>Docker requirement</s></h3>
+        <p>Clone, run setup, done. No containers, no compose files, no image pulls. Node.js is the only runtime you need.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="robustness">
+  <div class="container">
+    <div class="section-title">Fewer parts, fewer failures</div>
+    <div class="robustness-quote">
+      <p>OpenClaw's 17,000+ open issues aren't an anomaly &mdash; they're the natural cost of complexity. Every plugin, adapter, and config layer is another thing that can break.</p>
+      <p>cogent42 has <strong>one file</strong>. You can read every line. There are no plugin version conflicts because there are no plugins. There are no channel adapter bugs because there's one channel. There are no config parsing errors because there are five environment variables.</p>
+      <p><strong>Fewer moving parts. Fewer failure modes. That's the whole thesis.</strong></p>
+    </div>
   </div>
 </section>
 
@@ -625,14 +758,24 @@
         <p>Bash execution, file read/write/edit, code search. Everything Claude Code can do, from your phone.</p>
       </div>
       <div class="feature">
-        <div class="feature-icon">&#x1f9e0;</div>
-        <h3>Persistent memory</h3>
-        <p>Sessions survive restarts. Facts and decisions are extracted into a knowledge base that carries across conversations.</p>
-      </div>
-      <div class="feature">
         <div class="feature-icon">&#x23f0;</div>
         <h3>Scheduled tasks <span class="feature-new">new</span></h3>
         <p>Schedule recurring tasks in plain English. "Check disk space every morning at 9am." No cron syntax needed.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">&#x21c5;</div>
+        <h3>Smart model routing</h3>
+        <p>Defaults to Sonnet 4.6 for speed. Auto-escalates to Opus 4.6 when needed. Auto-reverts after success to save costs.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">&#x1f504;</div>
+        <h3>One-command updates <span class="feature-new">new</span></h3>
+        <p>Type /update in Telegram to pull the latest version, install dependencies, and safely restart. Your config stays intact.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">&#x1f9e0;</div>
+        <h3>Persistent memory</h3>
+        <p>Sessions survive restarts. Facts and decisions are extracted into a knowledge base that carries across conversations.</p>
       </div>
       <div class="feature">
         <div class="feature-icon">&#x1f4e1;</div>
@@ -653,16 +796,6 @@
         <div class="feature-icon">&#x1f4ce;</div>
         <h3>Photos &amp; documents</h3>
         <p>Send images and files via Telegram. Claude processes them on your server &mdash; screenshot debugging, document analysis, anything.</p>
-      </div>
-      <div class="feature">
-        <div class="feature-icon">&#x21c5;</div>
-        <h3>Smart model routing</h3>
-        <p>Defaults to Sonnet 4.6 for speed. Auto-escalates to Opus 4.6 when needed. Auto-reverts after success to save costs.</p>
-      </div>
-      <div class="feature">
-        <div class="feature-icon">&#x1f504;</div>
-        <h3>One-command updates <span class="feature-new">new</span></h3>
-        <p>Type /update in Telegram to pull the latest version, install dependencies, and safely restart. Your config stays intact.</p>
       </div>
     </div>
   </div>
