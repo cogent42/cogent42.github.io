@@ -1387,20 +1387,49 @@ bot.command("knowledge", async (ctx) => {
     return ctx.reply("No knowledge stored yet. It builds up as you use the bot.");
   }
 
-  const permanent = knowledge.entries.filter((e) => e.importance === "permanent");
-  const normal = knowledge.entries.filter((e) => e.importance !== "permanent");
+  const CATEGORY_ICONS = {
+    rule: "🚫", server: "🖥", project: "📂", preference: "⚙️",
+    decision: "🎯", config: "🔑", workflow: "🔄", bug: "🐛",
+    mistake: "💡", general: "📝",
+  };
 
-  let text = "";
-  if (permanent.length > 0) {
-    text += "📌 Permanent:\n" + permanent.map((e) => `  [${e.category}] ${e.fact}`).join("\n");
-  }
-  if (normal.length > 0) {
-    text += (text ? "\n\n" : "") + "📝 Normal:\n" + normal.map((e) => `  [${e.category}] ${e.fact}`).join("\n");
+  // Group entries by category
+  const groups = {};
+  for (const e of knowledge.entries) {
+    const cat = e.category || "general";
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(e);
   }
 
-  const full = `Stored knowledge (${permanent.length} permanent, ${normal.length} normal):\n\n${text}`;
-  for (let i = 0; i < full.length; i += 4000) {
-    await ctx.reply(full.slice(i, i + 4000));
+  // Sort categories: rules first, then by count descending
+  const categoryOrder = Object.keys(groups).sort((a, b) => {
+    if (a === "rule") return -1;
+    if (b === "rule") return 1;
+    return groups[b].length - groups[a].length;
+  });
+
+  const permanent = knowledge.entries.filter((e) => e.importance === "permanent").length;
+  const normal = knowledge.entries.length - permanent;
+
+  let text = `<b>Knowledge Base</b>  —  ${knowledge.entries.length} entries (${permanent} permanent, ${normal} normal)\n`;
+
+  for (const cat of categoryOrder) {
+    const entries = groups[cat];
+    const icon = CATEGORY_ICONS[cat] || "📝";
+    text += `\n${icon} <b>${cat.charAt(0).toUpperCase() + cat.slice(1)}</b> (${entries.length})\n`;
+    for (const e of entries) {
+      const pin = e.importance === "permanent" ? "📌 " : "";
+      text += `${pin}• ${escapeHtml(e.fact)}\n`;
+    }
+  }
+
+  const chunks = chunkMessage(text);
+  for (const chunk of chunks) {
+    try {
+      await ctx.reply(chunk, { parse_mode: "HTML" });
+    } catch {
+      await ctx.reply(chunk.replace(/<[^>]+>/g, ""));
+    }
   }
 });
 
