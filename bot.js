@@ -1269,7 +1269,12 @@ bot.command("update", async (ctx) => {
 
     ctx.reply(`${behind} new commit(s) found. Updating...`);
 
-    // Stash local changes (e.g. .env, local configs) to protect them
+    // Discard local bot.js changes (self-modifications from Claude) and pull clean
+    try {
+      run("git checkout -- bot.js");
+    } catch { /* no local changes to bot.js, that's fine */ }
+
+    // Stash remaining local changes (e.g. package-lock.json)
     const hasLocalChanges = run("git status --porcelain") !== "";
     if (hasLocalChanges) {
       run("git stash --include-untracked");
@@ -1279,17 +1284,18 @@ bot.command("update", async (ctx) => {
     try {
       run("git pull origin main");
     } catch (pullErr) {
-      // Restore local changes if pull fails
-      if (hasLocalChanges) run("git stash pop");
+      if (hasLocalChanges) try { run("git stash pop"); } catch {}
       return ctx.reply(`Update failed during git pull: ${pullErr.message}`);
     }
 
-    // Restore local changes
+    // Restore stashed changes — if conflicts, drop stash and use clean repo version
     if (hasLocalChanges) {
       try {
         run("git stash pop");
       } catch {
-        ctx.reply("Warning: local changes conflicted. Your .env is safe — check `git stash list` on the server.");
+        run("git checkout -- .");
+        run("git stash drop");
+        ctx.reply("Local changes conflicted with update — using clean repo version. Your .env is safe.");
       }
     }
 
