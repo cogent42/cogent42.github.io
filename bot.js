@@ -76,6 +76,9 @@ let currentModel = "claude-sonnet-4-6";
 let processing = false;
 let currentAbortController = null;
 let autoEscalated = false;
+let currentPromptText = ""; // track what the bot is currently working on
+const messageQueue = []; // queued messages waiting to run
+let pendingInject = null; // message to inject into the current task
 
 // --- Session Memory ---
 
@@ -745,13 +748,23 @@ function createProgressMessage(ctx) {
   };
 }
 
-// --- Processing Lock ---
+// --- Processing Lock & Message Queue ---
 
-async function withProcessingLock(ctx, fn) {
-  if (processing) {
-    return ctx.reply("Still working on your previous message...");
-  }
+function queueMessage(ctx, promptText, fn) {
+  const id = randomUUID().slice(0, 8);
+  messageQueue.push({ id, ctx, promptText, fn });
+  return id;
+}
+
+async function processQueue() {
+  if (processing || messageQueue.length === 0) return;
+  const next = messageQueue.shift();
+  await runWithLock(next.ctx, next.fn, next.promptText);
+}
+
+async function runWithLock(ctx, fn, promptText) {
   processing = true;
+  currentPromptText = promptText || "";
   await reactToMessage(ctx, "👀");
   try {
     await fn();
@@ -759,6 +772,21 @@ async function withProcessingLock(ctx, fn) {
   } catch (err) {
     await reactToMessage(ctx, "❌");
     if (err.name === "AbortError" || err.message?.includes("aborted")) {
+      // Check if this was an inject-triggered abort
+      if (pendingInject) {
+        const inject = pendingInject;
+        pendingInject = null;
+        // Resume the session with the injected context
+        const combinedPrompt =
+          `[The user sent additional context while you were working on the previous task: "${inject.text}"]\n\n` +
+          `Continue with what you were doing, but incorporate this new information. ` +
+          `If it changes the task, adapt accordingly.`;
+        processing = false;
+        currentAbortController = null;
+        return runWithLock(inject.ctx, async () => {
+          await askClaude(combinedPrompt, inject.ctx);
+        }, inject.text);
+      }
       await ctx.reply("Query cancelled.");
     } else {
       console.error("Error:", err);
@@ -767,7 +795,38 @@ async function withProcessingLock(ctx, fn) {
   } finally {
     processing = false;
     currentAbortController = null;
+    currentPromptText = "";
+    // Auto-drain the queue
+    if (messageQueue.length > 0) {
+      setImmediate(processQueue);
+    }
   }
+}
+
+async function withProcessingLock(ctx, fn, promptText) {
+  if (!processing) {
+    return runWithLock(ctx, fn, promptText);
+  }
+
+  // Bot is busy — offer inject or queue
+  const id = queueMessage(ctx, promptText, fn);
+  const pos = messageQueue.length;
+  const preview = (promptText || "").slice(0, 50);
+  const currentPreview = currentPromptText.slice(0, 60);
+
+  await ctx.reply(
+    `I'm currently working on:\n<i>${escapeHtml(currentPreview)}${currentPromptText.length > 60 ? "…" : ""}</i>\n\n` +
+    `Your new message:\n<i>${escapeHtml(preview)}${(promptText || "").length > 50 ? "…" : ""}</i>`,
+    {
+      parse_mode: "HTML",
+      ...Markup.inlineKeyboard([
+        [
+          Markup.button.callback("⚡ Inject now", `inject_${id}`),
+          Markup.button.callback(`📥 Queue (#${pos})`, `keep_${id}`),
+        ],
+      ]),
+    }
+  );
 }
 
 // --- Claude Integration ---
@@ -930,6 +989,43 @@ bot.use((ctx, next) => {
   return next();
 });
 
+// --- Inject / Queue Actions ---
+
+bot.action(/^inject_(.+)$/, async (ctx) => {
+  await ctx.answerCbQuery("Injecting…");
+  const id = ctx.match[1];
+  const idx = messageQueue.findIndex((q) => q.id === id);
+
+  if (idx === -1) {
+    return ctx.editMessageText("Already processed.");
+  }
+
+  const item = messageQueue.splice(idx, 1)[0];
+
+  if (!processing) {
+    // Nothing running — just run it immediately
+    await ctx.editMessageText("▶️ Running now…");
+    runWithLock(item.ctx, item.fn, item.promptText);
+    return;
+  }
+
+  // Set as pending inject and abort current task
+  pendingInject = { ctx: item.ctx, text: item.promptText };
+  await ctx.editMessageText("⚡ Injecting — restarting current task with your new context…");
+  currentAbortController?.abort();
+});
+
+bot.action(/^keep_(.+)$/, async (ctx) => {
+  await ctx.answerCbQuery("Queued");
+  const id = ctx.match[1];
+  const pos = messageQueue.findIndex((q) => q.id === id) + 1;
+  if (pos > 0) {
+    await ctx.editMessageText(`📥 Queued at position #${pos} — I'll get to it after the current task.`);
+  } else {
+    await ctx.editMessageText("📥 Queued — I'll get to it next.");
+  }
+});
+
 // --- Commands ---
 
 bot.command("start", (ctx) => {
@@ -998,6 +1094,7 @@ bot.command("cancel", async (ctx) => {
   if (!processing || !currentAbortController) {
     return ctx.reply("Nothing to cancel.");
   }
+  pendingInject = null; // clear any pending inject so abort is a real cancel
   currentAbortController.abort();
   await ctx.reply("Cancelling...");
 });
@@ -1333,35 +1430,34 @@ bot.command("update", async (ctx) => {
 
 // --- Message Handlers ---
 
-bot.on("text", (ctx) =>
+bot.on("text", (ctx) => {
+  const text = ctx.message.text;
   withProcessingLock(ctx, async () => {
-    const response = await askClaude(ctx.message.text, ctx);
-    // response already sent via progress.finish() or sendResponse() inside askClaude
-    // but askClaude now handles sending internally, so we don't double-send
-  })
-);
+    await askClaude(text, ctx);
+  }, text);
+});
 
-bot.on("photo", (ctx) =>
+bot.on("photo", (ctx) => {
+  const caption = ctx.message.caption || "";
   withProcessingLock(ctx, async () => {
     const photo = ctx.message.photo[ctx.message.photo.length - 1];
     const filename = `photo_${Date.now()}.jpg`;
     const filePath = await downloadTelegramFile(ctx, photo.file_id, filename);
-    const caption = ctx.message.caption || "";
     const prompt = `User sent a photo (saved at ${filePath}).${caption ? ` Caption: ${caption}` : ""} Describe or process the image as needed.`;
     await askClaude(prompt, ctx);
-  })
-);
+  }, caption || "photo");
+});
 
-bot.on("document", (ctx) =>
+bot.on("document", (ctx) => {
+  const doc = ctx.message.document;
+  const caption = ctx.message.caption || "";
   withProcessingLock(ctx, async () => {
-    const doc = ctx.message.document;
     const filename = doc.file_name || `file_${Date.now()}`;
     const filePath = await downloadTelegramFile(ctx, doc.file_id, filename);
-    const caption = ctx.message.caption || "";
     const prompt = `User sent a file: ${filename} (saved at ${filePath}, ${(doc.file_size / 1024).toFixed(1)} KB).${caption ? ` Caption: ${caption}` : ""} Process the file as needed.`;
     await askClaude(prompt, ctx);
-  })
-);
+  }, caption || doc.file_name || "document");
+});
 
 bot.on(["voice", "video", "video_note", "sticker", "animation"], (ctx) => {
   ctx.reply(
