@@ -1230,7 +1230,7 @@ bot.command("history", (ctx) => {
   );
 });
 
-bot.command("knowledge", (ctx) => {
+bot.command("knowledge", async (ctx) => {
   const knowledge = loadKnowledge();
   if (knowledge.entries.length === 0) {
     return ctx.reply("No knowledge stored yet. It builds up as you use the bot.");
@@ -1247,9 +1247,10 @@ bot.command("knowledge", (ctx) => {
     text += (text ? "\n\n" : "") + "📝 Normal:\n" + normal.map((e) => `  [${e.category}] ${e.fact}`).join("\n");
   }
 
-  ctx.reply(
-    `Stored knowledge (${permanent.length} permanent, ${normal.length} normal):\n\n${text}`
-  );
+  const full = `Stored knowledge (${permanent.length} permanent, ${normal.length} normal):\n\n${text}`;
+  for (let i = 0; i < full.length; i += 4000) {
+    await ctx.reply(full.slice(i, i + 4000));
+  }
 });
 
 bot.command("update", async (ctx) => {
@@ -1386,6 +1387,9 @@ bot.telegram
 
 cleanupArchivedSessions();
 startScheduler();
+bot.catch((err, ctx) => {
+  console.error("Telegraf error:", err.message);
+});
 bot.launch();
 console.log(
   `${BOT_NAME} v${VERSION} started | Model: ${currentModel} | CWD: ${WORKING_DIRECTORY}`
