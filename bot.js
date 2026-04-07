@@ -768,13 +768,28 @@ async function processQueue() {
   await runWithLock(next.ctx, next.fn, next.promptText);
 }
 
+let lastQueryStats = { prompt: "", responseText: "", turnCount: 0, toolCount: 0 };
+
+function pickSuccessEmoji(prompt, responseText, turnCount, toolCount) {
+  const lower = prompt.toLowerCase();
+  if (/\b(thanks?|thx|ty|thank\s*you|appreciate)\b/.test(lower)) return "❤️";
+  if (turnCount >= 5) return "🏆";
+  if (responseText.includes("```")) return "👨‍💻";
+  if (turnCount <= 1 && toolCount === 0) return "⚡";
+  return "👍";
+}
+
 async function runWithLock(ctx, fn, promptText) {
   processing = true;
   currentPromptText = promptText || "";
   await reactToMessage(ctx, "👀");
   try {
     await fn();
-    await reactToMessage(ctx, "👍");
+    const emoji = pickSuccessEmoji(
+      lastQueryStats.prompt, lastQueryStats.responseText,
+      lastQueryStats.turnCount, lastQueryStats.toolCount
+    );
+    await reactToMessage(ctx, emoji);
   } catch (err) {
     if (err.name === "AbortError" || err.message?.includes("aborted")) {
       // Check if this was an inject-triggered abort
@@ -891,6 +906,7 @@ async function runQuery(prompt, model, onProgress, isRetry = false) {
   let responseText = "";
   let sessionId = currentSessionId;
   let turnCount = 0;
+  let toolCount = 0;
 
   try {
     for await (const message of query({ prompt, options })) {
@@ -910,6 +926,7 @@ async function runQuery(prompt, model, onProgress, isRetry = false) {
           if (message.message?.content) {
             for (const block of message.message.content) {
               if (block.type === "tool_use") {
+                toolCount++;
                 onProgress(`${turnPrefix}Using tool: ${block.name}`);
               } else if (block.type === "text" && block.text) {
                 onProgress(`${turnPrefix}${block.text.slice(0, 200)}`);
@@ -945,7 +962,7 @@ async function runQuery(prompt, model, onProgress, isRetry = false) {
     clearTimeout(timeout);
   }
 
-  return { responseText, sessionId };
+  return { responseText, sessionId, turnCount, toolCount };
 }
 
 async function askClaude(prompt, ctx) {
@@ -972,7 +989,8 @@ async function askClaude(prompt, ctx) {
       }
     }
 
-    const { responseText, sessionId } = result;
+    const { responseText, sessionId, turnCount, toolCount } = result;
+    lastQueryStats = { prompt, responseText, turnCount, toolCount };
 
     addMessage(sessionId, "user", prompt);
     const session = addMessage(sessionId, "assistant", responseText);
