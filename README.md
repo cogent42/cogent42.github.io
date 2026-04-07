@@ -17,7 +17,7 @@ cogent42 is a single-file Telegram bot that gives you complete Claude Code capab
 - **Full Claude Code access** -- bash, file read/write/edit, and search via Telegram
 - **Photo & document support** -- send images and files, Claude processes them on your server
 - **Live progress updates** -- see what Claude is doing in real-time with turn counter (`[3/25] Using tool: bash`) via editable messages
-- **Acknowledgment reactions** -- instant visual feedback (👀 on receive, 👍 on success, 💔 on error)
+- **Acknowledgment reactions** -- instant visual feedback (👀 on receive, 👍 on success, 👎 on error)
 - **Scheduled tasks** -- schedule recurring tasks in plain English (e.g. "check disk space every morning at 9am")
 - **Interactive confirmations** -- inline keyboard buttons for destructive actions like /reset and /opus
 - **Persistent memory** -- conversations survive restarts through session resume

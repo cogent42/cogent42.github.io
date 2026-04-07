@@ -793,10 +793,10 @@ async function runWithLock(ctx, fn, promptText) {
           await askClaude(combinedPrompt, inject.ctx);
         }, inject.text);
       }
-      await reactToMessage(ctx, "💔");
+      await reactToMessage(ctx, "👎");
       await ctx.reply("Query cancelled.");
     } else {
-      await reactToMessage(ctx, "💔");
+      await reactToMessage(ctx, "👎");
       console.error("Error:", err);
       await ctx.reply("Error: " + (err.message || "Unknown error"));
     }
