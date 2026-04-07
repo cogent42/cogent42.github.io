@@ -776,10 +776,10 @@ async function runWithLock(ctx, fn, promptText) {
     await fn();
     await reactToMessage(ctx, "👍");
   } catch (err) {
-    await reactToMessage(ctx, "💔");
     if (err.name === "AbortError" || err.message?.includes("aborted")) {
       // Check if this was an inject-triggered abort
       if (pendingInject) {
+        await reactToMessage(ctx, "⚡");
         const inject = pendingInject;
         pendingInject = null;
         // Resume the session with the injected context
@@ -793,8 +793,10 @@ async function runWithLock(ctx, fn, promptText) {
           await askClaude(combinedPrompt, inject.ctx);
         }, inject.text);
       }
+      await reactToMessage(ctx, "💔");
       await ctx.reply("Query cancelled.");
     } else {
+      await reactToMessage(ctx, "💔");
       console.error("Error:", err);
       await ctx.reply("Error: " + (err.message || "Unknown error"));
     }
