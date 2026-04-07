@@ -774,9 +774,9 @@ async function runWithLock(ctx, fn, promptText) {
   await reactToMessage(ctx, "👀");
   try {
     await fn();
-    await reactToMessage(ctx, "✅");
+    await reactToMessage(ctx, "👍");
   } catch (err) {
-    await reactToMessage(ctx, "❌");
+    await reactToMessage(ctx, "💔");
     if (err.name === "AbortError" || err.message?.includes("aborted")) {
       // Check if this was an inject-triggered abort
       if (pendingInject) {
@@ -888,6 +888,7 @@ async function runQuery(prompt, model, onProgress, isRetry = false) {
 
   let responseText = "";
   let sessionId = currentSessionId;
+  let turnCount = 0;
 
   try {
     for await (const message of query({ prompt, options })) {
@@ -901,12 +902,16 @@ async function runQuery(prompt, model, onProgress, isRetry = false) {
 
       // Surface progress from intermediate messages
       if (onProgress) {
-        if (message.type === "assistant" && message.message?.content) {
-          for (const block of message.message.content) {
-            if (block.type === "tool_use") {
-              onProgress(`Using tool: ${block.name}`);
-            } else if (block.type === "text" && block.text) {
-              onProgress(block.text.slice(0, 200));
+        if (message.type === "assistant") {
+          turnCount++;
+          const turnPrefix = `[${turnCount}/${MAX_TURNS}] `;
+          if (message.message?.content) {
+            for (const block of message.message.content) {
+              if (block.type === "tool_use") {
+                onProgress(`${turnPrefix}Using tool: ${block.name}`);
+              } else if (block.type === "text" && block.text) {
+                onProgress(`${turnPrefix}${block.text.slice(0, 200)}`);
+              }
             }
           }
         }
@@ -1496,6 +1501,9 @@ bot.command("update", async (ctx) => {
       // pm2 not available or not managing this bot
     }
 
+    // Leave a flag so the bot can confirm it's back after restart
+    writeFileSync(join(MEMORY_DIR, "update-pending"), behind);
+
     if (usingPM2) {
       await ctx.reply("Update complete. Restarting via PM2...");
       // Small delay to ensure the message is sent before restart
@@ -1579,6 +1587,19 @@ bot.launch();
 console.log(
   `${BOT_NAME} v${VERSION} started | Model: ${currentModel} | CWD: ${WORKING_DIRECTORY}`
 );
+
+// Notify user if this restart was from /update
+const updateFlagPath = join(MEMORY_DIR, "update-pending");
+if (existsSync(updateFlagPath)) {
+  try {
+    const commits = readFileSync(updateFlagPath, "utf-8").trim();
+    unlinkSync(updateFlagPath);
+    bot.telegram.sendMessage(
+      TELEGRAM_USER_ID,
+      `✅ Updated and back online! (v${VERSION}, ${commits} commit(s) applied)`
+    );
+  } catch {}
+}
 
 function gracefulShutdown(signal) {
   if (currentAbortController) currentAbortController.abort();
