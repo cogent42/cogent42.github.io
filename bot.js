@@ -695,7 +695,22 @@ async function downloadTelegramFile(ctx, fileId, filename) {
 
 // --- Progress Message ---
 
-function createProgressMessage(ctx) {
+function pickWorkingMessage(promptText) {
+  const lower = (promptText || "").toLowerCase().trim();
+  // Contextual starters based on prompt content
+  if (/\b(fix|bug|error|broken|crash|fail)/i.test(lower)) return "⏳ Looking into it...";
+  if (/\b(explain|what is|how does|why)\b/i.test(lower)) return "⏳ Let me think...";
+  if (/\b(write|create|build|make|add|implement)\b/i.test(lower)) return "⏳ On it...";
+  if (/\b(check|find|search|look|where)\b/i.test(lower)) return "⏳ Checking...";
+  if (/\b(update|change|modify|edit|refactor)\b/i.test(lower)) return "⏳ Working on it...";
+  if (/\b(deploy|push|run|start|restart)\b/i.test(lower)) return "⏳ Firing it up...";
+  if (/\b(delete|remove|clean|drop)\b/i.test(lower)) return "⏳ On it...";
+  // Random fallback for generic messages
+  const fallbacks = ["⏳ Working...", "⏳ On it...", "⏳ Let me see...", "⏳ Give me a sec..."];
+  return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+}
+
+function createProgressMessage(ctx, promptText) {
   let msgId = null;
   let chatId = ctx.chat.id;
   let lastUpdate = 0;
@@ -704,7 +719,7 @@ function createProgressMessage(ctx) {
   return {
     async init() {
       try {
-        const sent = await ctx.reply("⏳ Working...");
+        const sent = await ctx.reply(pickWorkingMessage(promptText));
         msgId = sent.message_id;
       } catch {}
     },
@@ -967,7 +982,7 @@ async function runQuery(prompt, model, onProgress, isRetry = false) {
 
 async function askClaude(prompt, ctx) {
   const stopTyping = startTyping(ctx);
-  const progress = createProgressMessage(ctx);
+  const progress = createProgressMessage(ctx, prompt);
   await progress.init();
 
   try {
