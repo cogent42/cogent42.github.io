@@ -644,7 +644,40 @@
       position: relative;
       z-index: 1;
     }
-    /* feature-new removed */
+    /* Compact feature list */
+    .feature-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    .feature-list-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 16px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      transition: border-color 0.3s;
+    }
+    .feature-list-item:hover { border-color: var(--border-hover); }
+    .feature-list-icon {
+      color: var(--accent);
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .feature-list-icon svg { width: 18px; height: 18px; stroke-width: 1.5; }
+    .feature-list-text h4 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .feature-list-text p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
 
     /* ===== HOW IT WORKS ===== */
     .steps {
@@ -801,6 +834,7 @@
       .hero-stats { gap: 32px; }
       .hero-stat .number { font-size: 2.2rem; }
       .feature-grid { grid-template-columns: 1fr 1fr; }
+      .feature-list { grid-template-columns: 1fr; }
       .features .container { max-width: 720px; }
       .left-out-grid { grid-template-columns: 1fr 1fr; }
       .env-grid { grid-template-columns: 1fr; }
@@ -1052,49 +1086,65 @@
         <p>Bash, file read/write/edit, code search. Everything Claude Code can do, from your phone.</p>
       </div>
       <div class="feature">
-        <div class="feature-icon"><i data-lucide="clock"></i></div>
-        <h3>Scheduled tasks</h3>
-        <p>"Check disk space every morning at 9am." Plain English. No cron syntax.</p>
-      </div>
-      <div class="feature">
-        <div class="feature-icon"><i data-lucide="arrow-up-down"></i></div>
-        <h3>Smart model routing</h3>
-        <p>Defaults to Sonnet for speed. Auto-escalates to Opus when needed. Reverts to save costs.</p>
-      </div>
-      <div class="feature">
-        <div class="feature-icon"><i data-lucide="refresh-cw"></i></div>
-        <h3>One-command updates</h3>
-        <p>Type /update in Telegram. Latest version, fresh deps, safe restart. Config untouched.</p>
+        <div class="feature-icon"><i data-lucide="zap"></i></div>
+        <h3>Mid-task injection</h3>
+        <p>Send follow-ups while the bot is working. Short messages auto-inject with ⚡. Longer ones give you inject/queue buttons.</p>
       </div>
       <div class="feature">
         <div class="feature-icon"><i data-lucide="brain"></i></div>
         <h3>Persistent memory</h3>
         <p>Facts and decisions extracted into a knowledge base that carries across conversations.</p>
       </div>
-      <div class="feature">
-        <div class="feature-icon"><i data-lucide="zap"></i></div>
-        <h3>Mid-task injection</h3>
-        <p>Send follow-ups while the bot is working. Short messages auto-inject with ⚡. Longer ones give you inject/queue buttons.</p>
+    </div>
+    <div class="feature-list">
+      <div class="feature-list-item">
+        <div class="feature-list-icon"><i data-lucide="clock"></i></div>
+        <div class="feature-list-text">
+          <h4>Scheduled tasks</h4>
+          <p>Plain English scheduling. No cron syntax.</p>
+        </div>
       </div>
-      <div class="feature">
-        <div class="feature-icon"><i data-lucide="radio"></i></div>
-        <h3>Live progress</h3>
-        <p>See tool calls, file reads, and status updates in real-time as the query runs.</p>
+      <div class="feature-list-item">
+        <div class="feature-list-icon"><i data-lucide="arrow-up-down"></i></div>
+        <div class="feature-list-text">
+          <h4>Smart model routing</h4>
+          <p>Sonnet by default. Auto-escalates to Opus when needed.</p>
+        </div>
       </div>
-      <div class="feature">
-        <div class="feature-icon"><i data-lucide="credit-card"></i></div>
-        <h3>Your existing plan</h3>
-        <p>Uses your Claude Code subscription. No separate API key or per-token billing.</p>
+      <div class="feature-list-item">
+        <div class="feature-list-icon"><i data-lucide="radio"></i></div>
+        <div class="feature-list-text">
+          <h4>Live progress</h4>
+          <p>Real-time tool calls and status updates as Claude works.</p>
+        </div>
       </div>
-      <div class="feature">
-        <div class="feature-icon"><i data-lucide="lock"></i></div>
-        <h3>Single-user lock</h3>
-        <p>Locked to your Telegram ID. Others are silently rejected. Your server, your bot.</p>
+      <div class="feature-list-item">
+        <div class="feature-list-icon"><i data-lucide="refresh-cw"></i></div>
+        <div class="feature-list-text">
+          <h4>One-command updates</h4>
+          <p>Type /update in Telegram. Latest version, safe restart.</p>
+        </div>
       </div>
-      <div class="feature">
-        <div class="feature-icon"><i data-lucide="image"></i></div>
-        <h3>Photos &amp; documents</h3>
-        <p>Send images via Telegram. Screenshot debugging, document analysis, anything.</p>
+      <div class="feature-list-item">
+        <div class="feature-list-icon"><i data-lucide="credit-card"></i></div>
+        <div class="feature-list-text">
+          <h4>Your existing plan</h4>
+          <p>Uses your Claude Code subscription. No extra API keys.</p>
+        </div>
+      </div>
+      <div class="feature-list-item">
+        <div class="feature-list-icon"><i data-lucide="lock"></i></div>
+        <div class="feature-list-text">
+          <h4>Single-user lock</h4>
+          <p>Locked to your Telegram ID. Others silently rejected.</p>
+        </div>
+      </div>
+      <div class="feature-list-item">
+        <div class="feature-list-icon"><i data-lucide="image"></i></div>
+        <div class="feature-list-text">
+          <h4>Photos &amp; documents</h4>
+          <p>Send images and files. Screenshot debugging, document analysis.</p>
+        </div>
       </div>
     </div>
   </div>
