@@ -394,7 +394,7 @@ function buildSystemPrompt() {
     }
 
     parts.push(
-      `You have persistent memory from previous sessions on this server:\n\n${memoryBlock}\n\nUse this context but verify if unsure — things may have changed.`
+      `You have persistent memory from previous sessions on this server:\n\n${memoryBlock}\n\nWhen the user asks about anything in your knowledge base — a project, a service, a file, a workflow — always check the actual server files first before searching the web. This knowledge reflects what exists on this server; treat it as your first source of truth, not the internet.`
     );
   }
 
@@ -966,10 +966,12 @@ async function runQuery(prompt, model, onProgress, isRetry = false) {
         "Session resume may have failed, retrying fresh:",
         err.message
       );
+      const expiredSessionId = currentSessionId;
       currentSessionId = null;
       saveCurrentSessionId();
       clearTimeout(timeout);
       currentAbortController = null;
+      extractKnowledge(expiredSessionId).catch(() => {});
       return runQuery(prompt, model, onProgress, true);
     }
     throw err;
@@ -1636,9 +1638,12 @@ if (existsSync(updateFlagPath)) {
   } catch {}
 }
 
-function gracefulShutdown(signal) {
+async function gracefulShutdown(signal) {
   if (currentAbortController) currentAbortController.abort();
   if (scheduleTickInterval) clearInterval(scheduleTickInterval);
+  if (currentSessionId) {
+    await extractKnowledge(currentSessionId).catch(() => {});
+  }
   bot.stop(signal);
 }
 
