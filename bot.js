@@ -63,7 +63,8 @@ const KNOWLEDGE_DIR = join(__dirname, "knowledge");
 const KNOWLEDGE_FILE = join(KNOWLEDGE_DIR, "knowledge.json");
 const SCHEDULES_FILE = join(KNOWLEDGE_DIR, "schedules.json");
 const EXTRACTION_INTERVAL = 10;
-const MAX_KNOWLEDGE_ENTRIES = 1000;
+const MAX_KNOWLEDGE_ENTRIES = 5000;
+const MAX_INJECTED_ENTRIES = 30;
 const ARCHIVE_RETENTION_DAYS = 180;
 
 mkdirSync(MEMORY_DIR, { recursive: true });
@@ -362,7 +363,91 @@ Keep as many entries as needed — just remove genuine redundancy and staleness.
   }
 }
 
-function buildSystemPrompt() {
+// --- Smart Knowledge Retrieval ---
+
+const STOP_WORDS = new Set([
+  "i", "a", "an", "the", "is", "are", "was", "were", "be", "been", "have", "has",
+  "had", "do", "does", "did", "will", "would", "could", "should", "may", "might",
+  "can", "shall", "to", "of", "in", "for", "on", "with", "at", "by", "from", "as",
+  "into", "about", "it", "its", "this", "that", "these", "those", "my", "your",
+  "his", "her", "we", "they", "them", "me", "him", "and", "or", "but", "not", "no",
+  "so", "if", "then", "than", "when", "what", "how", "where", "who", "which", "why",
+  "all", "each", "every", "any", "some", "up", "out", "just", "also", "very", "much",
+  "more", "tell", "give", "get", "make", "know", "see", "look", "check", "update",
+  "status", "show", "please", "want", "need", "help", "thing", "something",
+]);
+
+function tokenize(text) {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\-_.\/]/g, " ")
+    .split(/\s+/)
+    .filter((t) => t.length > 2 && !STOP_WORDS.has(t));
+}
+
+function scoreEntry(entry, queryTokens) {
+  const factLower = entry.fact.toLowerCase();
+  const categoryLower = (entry.category || "").toLowerCase();
+  let score = 0;
+
+  for (const token of queryTokens) {
+    if (factLower.includes(token)) {
+      // Longer token matches are more meaningful
+      score += token.length;
+      // Bonus for word-boundary match (exact word, not substring)
+      if (new RegExp(`\\b${token}\\b`).test(factLower)) {
+        score += token.length;
+      }
+    }
+    // Category match bonus
+    if (categoryLower.includes(token)) {
+      score += 3;
+    }
+  }
+
+  // Permanent entries get a baseline boost
+  if (entry.importance === "permanent") score += 2;
+
+  return score;
+}
+
+function selectRelevantKnowledge(entries, prompt) {
+  const rules = entries.filter((e) => e.category === "rule");
+  const others = entries.filter((e) => e.category !== "rule");
+
+  const queryTokens = tokenize(prompt || "");
+  const budget = Math.max(0, MAX_INJECTED_ENTRIES - rules.length);
+
+  // Score all non-rule entries
+  const scored = others.map((entry) => ({
+    entry,
+    score: queryTokens.length > 0 ? scoreEntry(entry, queryTokens) : 0,
+  }));
+
+  // Sort by score descending, then by timestamp descending (newer first)
+  scored.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return (
+      new Date(b.entry.timestamp || 0) - new Date(a.entry.timestamp || 0)
+    );
+  });
+
+  let selected;
+  if (scored.length > 0 && scored[0].score > 0) {
+    // We have relevant matches — take top entries by score
+    selected = scored.slice(0, budget).map((s) => s.entry);
+  } else {
+    // No relevant matches (generic message like "hi") — fall back to most recent
+    const recent = [...others].sort(
+      (a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0)
+    );
+    selected = recent.slice(0, budget);
+  }
+
+  return { rules, context: selected };
+}
+
+function buildSystemPrompt(prompt) {
   const parts = [];
 
   // Critical safety rule — never self-modify
@@ -377,20 +462,22 @@ function buildSystemPrompt() {
 
   const knowledge = loadKnowledge();
   if (knowledge.entries.length > 0) {
-    // Sort: rules first (highest priority), then permanent, then normal
-    const rules = knowledge.entries.filter((e) => e.category === "rule");
-    const others = knowledge.entries.filter((e) => e.category !== "rule");
-    const sorted = [...rules, ...others];
+    const { rules, context } = selectRelevantKnowledge(
+      knowledge.entries,
+      prompt
+    );
 
     const ruleFacts = rules.map((e) => `- ${e.fact}`).join("\n");
-    const otherFacts = others.map((e) => `- [${e.category}] ${e.fact}`).join("\n");
+    const contextFacts = context
+      .map((e) => `- [${e.category}] ${e.fact}`)
+      .join("\n");
 
     let memoryBlock = "";
     if (rules.length > 0) {
       memoryBlock += `RULES — always follow these, no exceptions:\n${ruleFacts}\n\n`;
     }
-    if (others.length > 0) {
-      memoryBlock += `Context from previous sessions:\n${otherFacts}`;
+    if (context.length > 0) {
+      memoryBlock += `Context from previous sessions (${context.length} most relevant of ${knowledge.entries.length} total):\n${contextFacts}`;
     }
 
     parts.push(
@@ -506,12 +593,13 @@ async function runScheduledJob(job) {
       stderr: (data) => console.error("[schedule stderr]", data),
     };
 
-    const systemPrompt = buildSystemPrompt();
+    const taskPrompt = `[Scheduled task] ${job.task}`;
+    const systemPrompt = buildSystemPrompt(job.task);
     if (systemPrompt) options.systemPrompt = systemPrompt;
 
     let responseText = "";
     for await (const message of query({
-      prompt: `[Scheduled task] ${job.task}`,
+      prompt: taskPrompt,
       options,
     })) {
       if (message.type === "result" && message.subtype === "success") {
@@ -912,7 +1000,7 @@ async function runQuery(prompt, model, onProgress, isRetry = false) {
   if (currentSessionId && !isRetry) {
     options.resume = currentSessionId;
   } else {
-    const systemPrompt = buildSystemPrompt();
+    const systemPrompt = buildSystemPrompt(prompt);
     if (systemPrompt) options.systemPrompt = systemPrompt;
   }
 
