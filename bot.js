@@ -375,7 +375,32 @@ const STOP_WORDS = new Set([
   "all", "each", "every", "any", "some", "up", "out", "just", "also", "very", "much",
   "more", "tell", "give", "get", "make", "know", "see", "look", "check", "update",
   "status", "show", "please", "want", "need", "help", "thing", "something",
+  "you", "use", "using", "used", "try", "like", "let", "run", "put", "going",
+  "take", "come", "done", "been", "new", "old", "now", "today", "really",
+  "actually", "figure", "doing", "happen", "happening", "able", "based",
 ]);
+
+// Minimal stemmer — handles common suffixes for matching plurals/tenses
+function stem(word) {
+  if (word.length <= 4) return word;
+  if (word.endsWith("ies")) return word.slice(0, -3) + "y";
+  if (word.endsWith("ves")) return word.slice(0, -3) + "f";
+  if (word.endsWith("ing") && word.length > 5) return word.slice(0, -3);
+  if (word.endsWith("tion")) return word.slice(0, -4);
+  if (word.endsWith("sion")) return word.slice(0, -4);
+  if (word.endsWith("ment")) return word.slice(0, -4);
+  if (word.endsWith("ness")) return word.slice(0, -4);
+  if (word.endsWith("ated")) return word.slice(0, -2);
+  if (word.endsWith("ized")) return word.slice(0, -2);
+  if (word.endsWith("ted")) return word.slice(0, -2);
+  if (word.endsWith("led")) return word.slice(0, -2);
+  if (word.endsWith("ned")) return word.slice(0, -2);
+  if (word.endsWith("ed") && word.length > 4) return word.slice(0, -2);
+  if (word.endsWith("ly") && word.length > 4) return word.slice(0, -2);
+  if (word.endsWith("es") && word.length > 4) return word.slice(0, -2);
+  if (word.endsWith("s") && !word.endsWith("ss") && word.length > 3) return word.slice(0, -1);
+  return word;
+}
 
 function tokenize(text) {
   return text
@@ -385,43 +410,60 @@ function tokenize(text) {
     .filter((t) => t.length > 2 && !STOP_WORDS.has(t));
 }
 
-function scoreEntry(entry, queryTokens) {
+function scoreEntry(entry, queryTokens, queryStemmed) {
   const factLower = entry.fact.toLowerCase();
   const categoryLower = (entry.category || "").toLowerCase();
   let score = 0;
 
-  for (const token of queryTokens) {
+  for (let i = 0; i < queryTokens.length; i++) {
+    const token = queryTokens[i];
+    const stemmed = queryStemmed[i];
+
     if (factLower.includes(token)) {
       // Longer token matches are more meaningful
       score += token.length;
       // Bonus for word-boundary match (exact word, not substring)
-      if (new RegExp(`\\b${token}\\b`).test(factLower)) {
+      const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      if (new RegExp(`\\b${escaped}\\b`).test(factLower)) {
         score += token.length;
       }
+    } else if (stemmed !== token) {
+      // Stemmed match fallback — check if any word in the fact shares the stem
+      const factWords = factLower.split(/\W+/);
+      for (const fw of factWords) {
+        if (fw.length > 2 && stem(fw) === stemmed) {
+          score += stemmed.length; // Half credit (no boundary bonus)
+          break;
+        }
+      }
     }
-    // Category match bonus
-    if (categoryLower.includes(token)) {
+
+    // Category match — exact or stemmed
+    if (categoryLower.includes(token) || categoryLower.includes(stemmed)) {
       score += 3;
     }
   }
 
-  // Permanent entries get a baseline boost
-  if (entry.importance === "permanent") score += 2;
+  // Permanent boost only when there's already a keyword match
+  if (entry.importance === "permanent" && score > 0) score += 2;
 
   return score;
 }
+
+const MIN_RELEVANCE_SCORE = 4;
 
 function selectRelevantKnowledge(entries, prompt) {
   const rules = entries.filter((e) => e.category === "rule");
   const others = entries.filter((e) => e.category !== "rule");
 
   const queryTokens = tokenize(prompt || "");
+  const queryStemmed = queryTokens.map(stem);
   const budget = Math.max(0, MAX_INJECTED_ENTRIES - rules.length);
 
   // Score all non-rule entries
   const scored = others.map((entry) => ({
     entry,
-    score: queryTokens.length > 0 ? scoreEntry(entry, queryTokens) : 0,
+    score: queryTokens.length > 0 ? scoreEntry(entry, queryTokens, queryStemmed) : 0,
   }));
 
   // Sort by score descending, then by timestamp descending (newer first)
@@ -432,10 +474,12 @@ function selectRelevantKnowledge(entries, prompt) {
     );
   });
 
+  // Only count entries above the minimum relevance threshold
+  const meaningful = scored.filter((s) => s.score >= MIN_RELEVANCE_SCORE);
+
   let selected;
-  if (scored.length > 0 && scored[0].score > 0) {
-    // We have relevant matches — take top entries by score
-    selected = scored.slice(0, budget).map((s) => s.entry);
+  if (meaningful.length > 0) {
+    selected = meaningful.slice(0, budget).map((s) => s.entry);
   } else {
     // No relevant matches (generic message like "hi") — fall back to most recent
     const recent = [...others].sort(
