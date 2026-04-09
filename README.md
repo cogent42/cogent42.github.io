@@ -110,9 +110,12 @@ cogent42 maintains a persistent knowledge base across conversations:
 
 1. After every **10 conversation turns**, cogent42 extracts facts and decisions from the conversation.
 2. On `/reset`, knowledge is **always extracted** before the session is archived.
-3. Extracted knowledge is **injected into the system prompt** of new sessions.
-4. Knowledge is capped at **1,000 entries** -- oldest entries are pruned when the limit is reached.
-5. This keeps the context window small while maintaining persistent memory across conversations.
+3. On **shutdown or session expiry**, knowledge is extracted before the session is discarded.
+4. When a new session starts, cogent42 **scores every knowledge entry against your first message** and injects only the most relevant entries (up to 30) plus all rules -- not the entire knowledge base.
+5. If your first message is generic (e.g. "hi"), it falls back to the **most recent** entries.
+6. Knowledge is capped at **5,000 entries** -- oldest normal entries are pruned when the limit is reached; permanent entries are never dropped.
+
+This means the context window stays small (~2K tokens for knowledge) regardless of how large the knowledge base grows, while still surfacing the right context for every conversation.
 
 ## Architecture
 
