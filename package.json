@@ -1,6 +1,6 @@
 {
   "name": "cogent42",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Telegram bot that gives you full Claude Code access to your server",
   "type": "module",
   "main": "bot.js",
