@@ -158,6 +158,22 @@ pm2 save && pm2 startup
 
 > **Warning:** cogent42 uses `bypassPermissions` mode, which gives Claude **unrestricted access** to your server -- bash, file system, everything. Only run this on machines you are comfortable giving full access to.
 
+## Development
+
+All work happens on the `dev` branch (or feature branches off `dev`). To release:
+
+1. Open a PR from `dev` to `main`
+2. Merge the PR
+3. On `main`, run the appropriate bump command:
+
+```bash
+npm run release:patch   # bug fixes (1.4.0 → 1.4.1)
+npm run release:minor   # new features (1.4.0 → 1.5.0)
+npm run release:major   # breaking changes (1.4.0 → 2.0.0)
+```
+
+This updates `package.json`, creates a git tag, pushes to `main`, and triggers a GitHub Release with auto-generated release notes.
+
 ## License
 
 MIT

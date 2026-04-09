@@ -7,7 +7,10 @@
   "scripts": {
     "start": "node bot.js",
     "setup": "node setup.js",
-    "pm2": "pm2 start ecosystem.config.cjs"
+    "pm2": "pm2 start ecosystem.config.cjs",
+    "release:patch": "npm version patch && git push origin main --follow-tags",
+    "release:minor": "npm version minor && git push origin main --follow-tags",
+    "release:major": "npm version major && git push origin main --follow-tags"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.92",
