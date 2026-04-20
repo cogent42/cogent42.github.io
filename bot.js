@@ -35,7 +35,7 @@ import {
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execSync } from "node:child_process";
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 
 // --- Config ---
 
@@ -66,9 +66,26 @@ const EXTRACTION_INTERVAL = 10;
 const MAX_KNOWLEDGE_ENTRIES = 5000;
 const MAX_INJECTED_ENTRIES = 30;
 const ARCHIVE_RETENTION_DAYS = 180;
+const INSTANCE_REGISTRY_DIR = join(homedir(), ".cogent42", "instances");
+const INSTANCE_ID = createHash("sha256")
+  .update(__dirname)
+  .digest("hex")
+  .slice(0, 12);
+const INSTANCE_MARKER_FILE = join(
+  INSTANCE_REGISTRY_DIR,
+  `${INSTANCE_ID}.json`
+);
+const FALLBACK_STALE_DAYS = 30;
+const FALLBACK_EXCLUDE_CATEGORIES = new Set(["preference", "rule"]);
+const KNOWLEDGE_FALLBACK_DISABLED =
+  process.env.DISABLE_KNOWLEDGE_FALLBACK === "true";
 
 mkdirSync(MEMORY_DIR, { recursive: true });
 mkdirSync(KNOWLEDGE_DIR, { recursive: true });
+if (!KNOWLEDGE_FALLBACK_DISABLED) {
+  mkdirSync(INSTANCE_REGISTRY_DIR, { recursive: true });
+  registerInstance();
+}
 
 // --- State ---
 
@@ -191,6 +208,54 @@ function loadKnowledge() {
 function saveKnowledge(knowledge) {
   knowledge.updatedAt = new Date().toISOString();
   writeFileSync(KNOWLEDGE_FILE, JSON.stringify(knowledge, null, 2));
+  registerInstance();
+}
+
+function registerInstance() {
+  if (KNOWLEDGE_FALLBACK_DISABLED) return;
+  try {
+    writeFileSync(
+      INSTANCE_MARKER_FILE,
+      JSON.stringify(
+        {
+          id: INSTANCE_ID,
+          name: BOT_NAME,
+          installPath: __dirname,
+          knowledgeFile: KNOWLEDGE_FILE,
+          lastSeen: new Date().toISOString(),
+        },
+        null,
+        2
+      )
+    );
+  } catch (e) {
+    console.error("[fallback] Failed to write instance marker:", e.message);
+  }
+}
+
+function loadFallbackEntries() {
+  if (KNOWLEDGE_FALLBACK_DISABLED) return [];
+  if (!existsSync(INSTANCE_REGISTRY_DIR)) return [];
+  const cutoffMs = Date.now() - FALLBACK_STALE_DAYS * 24 * 60 * 60 * 1000;
+  const entries = [];
+  for (const f of readdirSync(INSTANCE_REGISTRY_DIR)) {
+    if (f === `${INSTANCE_ID}.json`) continue;
+    try {
+      const marker = JSON.parse(
+        readFileSync(join(INSTANCE_REGISTRY_DIR, f), "utf-8")
+      );
+      if (new Date(marker.lastSeen || 0).getTime() < cutoffMs) continue;
+      if (!marker.knowledgeFile || !existsSync(marker.knowledgeFile)) continue;
+      const data = JSON.parse(readFileSync(marker.knowledgeFile, "utf-8"));
+      for (const e of data.entries || []) {
+        if (FALLBACK_EXCLUDE_CATEGORIES.has(e.category)) continue;
+        entries.push({ ...e, _source: marker.name || "other" });
+      }
+    } catch {
+      // skip unreadable markers
+    }
+  }
+  return entries;
 }
 
 async function extractKnowledge(sessionId) {
@@ -505,15 +570,17 @@ function buildSystemPrompt(prompt) {
   }
 
   const knowledge = loadKnowledge();
-  if (knowledge.entries.length > 0) {
-    const { rules, context } = selectRelevantKnowledge(
-      knowledge.entries,
-      prompt
-    );
+  const fallbackEntries = loadFallbackEntries();
+  const allEntries = [...knowledge.entries, ...fallbackEntries];
+  if (allEntries.length > 0) {
+    const { rules, context } = selectRelevantKnowledge(allEntries, prompt);
 
     const ruleFacts = rules.map((e) => `- ${e.fact}`).join("\n");
     const contextFacts = context
-      .map((e) => `- [${e.category}] ${e.fact}`)
+      .map(
+        (e) =>
+          `- [${e.category}${e._source ? ` from ${e._source}` : ""}] ${e.fact}`
+      )
       .join("\n");
 
     let memoryBlock = "";
@@ -521,7 +588,7 @@ function buildSystemPrompt(prompt) {
       memoryBlock += `RULES — always follow these, no exceptions:\n${ruleFacts}\n\n`;
     }
     if (context.length > 0) {
-      memoryBlock += `Context from previous sessions (${context.length} most relevant of ${knowledge.entries.length} total):\n${contextFacts}`;
+      memoryBlock += `Context from previous sessions (${context.length} most relevant of ${allEntries.length} total):\n${contextFacts}`;
     }
 
     parts.push(
