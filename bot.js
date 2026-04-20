@@ -1195,9 +1195,9 @@ async function askClaude(prompt, ctx) {
       );
     } catch (err) {
       if (currentModel === "claude-sonnet-4-6" && err.name !== "AbortError") {
-        progress.update("Escalating to Opus 4.6...");
+        progress.update("Escalating to Opus 4.7...");
         autoEscalated = true;
-        result = await runQuery(prompt, "claude-opus-4-6", (text) =>
+        result = await runQuery(prompt, "claude-opus-4-7", (text) =>
           progress.update(text)
         );
       } else {
@@ -1336,7 +1336,7 @@ bot.command("start", (ctx) => {
       `/schedules - View scheduled tasks\n` +
       `/status - System information\n` +
       `/history - Conversation history stats\n` +
-      `/opus - Switch to Opus 4.6\n` +
+      `/opus - Switch to Opus 4.7\n` +
       `/sonnet - Switch to Sonnet 4.6\n` +
       `/knowledge - View stored knowledge`
   );
@@ -1397,11 +1397,11 @@ bot.command("cancel", async (ctx) => {
 // --- Opus with confirmation ---
 
 bot.command("opus", async (ctx) => {
-  if (currentModel === "claude-opus-4-6") {
-    return ctx.reply("Already on Opus 4.6.");
+  if (currentModel === "claude-opus-4-7") {
+    return ctx.reply("Already on Opus 4.7.");
   }
   await ctx.reply(
-    "Switch to Opus 4.6? (higher cost per query)",
+    "Switch to Opus 4.7? (higher cost per query)",
     Markup.inlineKeyboard([
       [
         Markup.button.callback("Switch to Opus", "opus_confirm"),
@@ -1413,9 +1413,9 @@ bot.command("opus", async (ctx) => {
 
 bot.action("opus_confirm", async (ctx) => {
   await ctx.answerCbQuery();
-  currentModel = "claude-opus-4-6";
+  currentModel = "claude-opus-4-7";
   autoEscalated = false;
-  await ctx.editMessageText("Switched to Opus 4.6");
+  await ctx.editMessageText("Switched to Opus 4.7");
 });
 
 bot.action("opus_cancel", async (ctx) => {
@@ -1807,7 +1807,7 @@ bot.telegram
     { command: "unschedule", description: "Remove a scheduled task" },
     { command: "status", description: "System information" },
     { command: "history", description: "Conversation history stats" },
-    { command: "opus", description: "Switch to Opus 4.6" },
+    { command: "opus", description: "Switch to Opus 4.7" },
     { command: "sonnet", description: "Switch to Sonnet 4.6" },
     { command: "knowledge", description: "View stored knowledge" },
     { command: "update", description: "Update bot to latest version" },
