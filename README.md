@@ -23,7 +23,7 @@ cogent42 is a single-file Telegram bot that gives you complete Claude Code capab
 - **Persistent memory** -- conversations survive restarts through session resume
 - **Automatic knowledge extraction** -- facts, decisions, and server config are pulled from conversations into a knowledge base (capped at 1,000 entries, auto-pruned)
 - **Cross-session context** -- knowledge is injected into new sessions so Claude remembers what matters
-- **Smart model routing** -- defaults to Claude Sonnet 4.6, auto-escalates to Opus 4.6 on failure, auto-reverts after success
+- **Smart model routing** -- defaults to Claude Sonnet 4.6, auto-escalates to Opus 4.7 on failure, auto-reverts after success
 - **Manual model switching** -- `/opus` and `/sonnet` commands
 - **Mid-task context injection** -- send follow-up messages while the bot is working. Short messages ("also check logs", "use port 8080") are auto-injected with a ⚡ reaction. Longer messages get inject/queue buttons so you choose
 - **Smart message queue** -- messages that aren't injected are queued and auto-processed in order after the current task finishes
@@ -87,7 +87,7 @@ node bot.js
 | `/unschedule` | Remove a scheduled task by ID |
 | `/status` | System info (version, uptime, disk, memory, model, session, schedules) |
 | `/history` | Session stats |
-| `/opus` | Switch to Opus 4.6 |
+| `/opus` | Switch to Opus 4.7 |
 | `/sonnet` | Switch to Sonnet 4.6 |
 | `/knowledge` | View stored knowledge entries |
 | `/update` | Update bot to the latest version and restart |
