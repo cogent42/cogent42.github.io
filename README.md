@@ -73,6 +73,7 @@ node bot.js
 | `WORKING_DIRECTORY` | No | `~` | Directory where Claude operates |
 | `BOT_NAME` | No | `cogent42` | Display name for your bot |
 | `BOT_PERSONALITY` | No | -- | Optional personality (e.g. "concise and direct") |
+| `DISABLE_KNOWLEDGE_FALLBACK` | No | -- | Set to `true` to disable cross-bot knowledge fallback (registration and sibling lookup) |
 
 ## Commands
 
@@ -116,6 +117,14 @@ cogent42 maintains a persistent knowledge base across conversations:
 6. Knowledge is capped at **5,000 entries** -- oldest normal entries are pruned when the limit is reached; permanent entries are never dropped.
 
 This means the context window stays small (~2K tokens for knowledge) regardless of how large the knowledge base grows, while still surfacing the right context for every conversation.
+
+### Fallback knowledge from sibling bots
+
+When you run multiple cogent42 bots on the same host, each one auto-registers itself in `~/.cogent42/instances/` on startup. During context injection, each bot reads its siblings' knowledge files as a **read-only fallback pool** — so bot B can surface something bot A learned. Factual categories only (`server`, `project`, `config`, `bug`, `workflow`, `mistake`, `decision`); `preference` and `rule` stay private so each bot's personality and corrections are its own.
+
+Entries borrowed from siblings are tagged on the way into the prompt, e.g. `[project from bot-a]`, so the bot knows they're not its own memory. Stale markers (lastSeen older than 30 days) and markers pointing at missing files are skipped automatically — no cleanup needed.
+
+No configuration. To opt out: `DISABLE_KNOWLEDGE_FALLBACK=true`.
 
 ## Architecture
 
